@@ -32,6 +32,7 @@
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
+  import io from 'socket.io-client'
   var getStartPlace
   var getEndPlace
   var lat1 = 3.0580092
@@ -78,6 +79,19 @@
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
+      var socket = io.connect('http://localhost:8081') //Making connection to socket on server
+
+      navigator.geolocation.getCurrentPosition(success);
+      function success(position) {
+        var point = new google.maps.LatLng(position.coords.latitude,
+          position.coords.longitude);
+          console.log(position.coords.latitude,position.coords.longitude)
+
+        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
+        socket.emit('driver-location', {
+          message: point
+        })
+      }
     },
     components: {
       Footer,
@@ -157,6 +171,9 @@
             console.log('Directions request failed due to ' + status)
           }
         })
+      },
+      getCurrentLocation() {
+
       },
       // getTrackingLocation1() {
       //   var self = this

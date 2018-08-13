@@ -31,6 +31,7 @@
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
+  import io from 'socket.io-client'
   var getStartPlace
   var getEndPlace
   var lat1 = 3.0580092
@@ -69,7 +70,7 @@
         x: null,
         mode: '',
         timeout: 6000,
-        text: 'Please specify both addresses!'
+        text: 'Please specify both addresses!',
       }
 
     },
@@ -77,12 +78,22 @@
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
+      var self = this
+
+
+      var socket = io.connect('http://localhost:8081') //Making connection to socket on server
+        //Listen for event on any driver-location from the server
+          socket.on('driver-location', function(data){
+            console.log(data.message)
+            self.centerMap(data.message)
+      })      
     },
     components: {
       Footer,
       SideNavigation,
       ConfirmationDialogBox
     },
+    
     methods: {
       createGoogleMaps() {
         return new Promise((resolve, reject) => {
