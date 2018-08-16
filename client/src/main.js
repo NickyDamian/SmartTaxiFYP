@@ -8,9 +8,14 @@ import 'vuetify/dist/vuetify.min.css' // Ensure you are using css-loader
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
 import colors from 'vuetify/es5/util/colors'
 import store from './store/store'
+import VueSocketIo from 'vue-socket.io-extended'
+import io from 'socket.io-client'
+
+//Making socket connection with the server
+Vue.use(VueSocketIo, io('http://localhost:8081'))
 
 //The google maps api
-import * as VueGoogleMaps from "vue2-google-maps";
+// import * as VueGoogleMaps from "vue2-google-maps";
 
 //Font icons for the login page alone
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -29,7 +34,6 @@ Vue.use(Vuetify, {
     error: '#b71c1c'
   }
  });
-
 
 // //Google maps api key
 //  Vue.use(VueGoogleMaps, {

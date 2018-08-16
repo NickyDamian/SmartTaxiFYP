@@ -14,7 +14,7 @@
       </div>
     </div>
     <div style="height:100%;width:100%" id="map"></div>
-    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="getTrackingLocation">
+    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="addmarker">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'></ConfirmationDialogBox>
@@ -32,11 +32,16 @@
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
-  import io from 'socket.io-client'
+  import LocationService from '@/services/LocationService'
   var getStartPlace
   var getEndPlace
   var lat1 = 3.0580092
   var lng1 = 101.7011474
+  var point = {
+    lat: 3.1973376,
+    lng: 101.76102399999999
+  }
+  var socketId 
   export default {
     data() {
       return {
@@ -75,22 +80,36 @@
       }
 
     },
+    sockets: {
+      //Check if connection has been made
+      connect() {
+        socketId = this.$socket.id
+        console.log('Client socket has been connected',socketId)
+      },
+    },
     mounted() {
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
-      var socket = io.connect('http://localhost:8081') //Making connection to socket on server
-
+      var self = this
       navigator.geolocation.getCurrentPosition(success);
-      function success(position) {
-        var point = new google.maps.LatLng(position.coords.latitude,
-          position.coords.longitude);
-          console.log(position.coords.latitude,position.coords.longitude)
 
-        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
-        socket.emit('driver-location', {
-          message: point
-        })
+      function success(position) {
+        point = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        }
+        console.log(position.coords.latitude, position.coords.longitude)
+        // console.log(socketId, "Kelf Gayyy", point)
+
+        //Save location of driver into the database
+        self.saveDriverLocation(socketId,point)
+
+        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value        
+        // self.$socket.emit('driverLocation', {
+        //   message: point
+        // })
+
       }
     },
     components: {
@@ -99,6 +118,16 @@
       ConfirmationDialogBox
     },
     methods: {
+      async saveDriverLocation(socketID, location) {
+        try {
+          const response = await LocationService.saveLocation({
+            socketID: socketID,
+            location: location
+          })
+        } catch (error) {
+          this.error = error.response.data.error
+        }
+      },
       createGoogleMaps() {
         return new Promise((resolve, reject) => {
           let gmap = document.createElement('script')
@@ -172,8 +201,16 @@
           }
         })
       },
-      getCurrentLocation() {
-
+      addmarker() {
+        var marker = new google.maps.Marker({
+          position: point,
+          map: this.vueGMap
+        });
+        console.log(point)
+        point = {
+          lat: 3.1983376,
+          lng: 101.76112399999999
+        }
       },
       // getTrackingLocation1() {
       //   var self = this

@@ -32,10 +32,13 @@
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
   import io from 'socket.io-client'
+  import LocationService from '@/services/LocationService'
+
   var getStartPlace
   var getEndPlace
   var lat1 = 3.0580092
   var lng1 = 101.7011474
+
   export default {
     data() {
       return {
@@ -74,31 +77,52 @@
       }
 
     },
+
+    sockets: {
+      //Check if connection has been made
+      connect() {
+        console.log('Client Socket has been connected')
+      },
+      //Listen for event on any driver-location messagefrom the server
+      driverLocation(data) {
+        // console.log(data.message.lat, data.message.lng);
+        console.log(data);
+        this.centerMap(data.message)
+      }
+    },
+
     mounted() {
+      var self = this
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
-      var self = this
-
-
-      var socket = io.connect('http://localhost:8081') //Making connection to socket on server
-        //Listen for event on any driver-location from the server
-          socket.on('driver-location', function(data){
-            console.log(data.message)
-            self.centerMap(data.message)
-      })      
+      this.getLocations()
     },
+
     components: {
       Footer,
       SideNavigation,
       ConfirmationDialogBox
     },
-    
+
     methods: {
+      async getLocations() {
+        var self = this
+        //do a request to the backend for all the driver locations
+        var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data 
+        
+        //Function is delayed to allow google libraries to be loaded first
+        setTimeout(function () {
+          for(var i=0; data[i] != undefined; i++){ 
+            self.centerMap(data[i].location);            
+          }        
+        }, 1000);
+      },
       createGoogleMaps() {
         return new Promise((resolve, reject) => {
           let gmap = document.createElement('script')
-          gmap.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places"
+          gmap.src =
+            "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places"
           gmap.type = 'text/javascript'
           gmap.onload = resolve
           gmap.onerror = reject
@@ -113,7 +137,7 @@
       },
       autoComplete() {
         var self = this;
-        this.autocomplete = new google.maps.places.Autocomplete(this.input, this.options);        
+        this.autocomplete = new google.maps.places.Autocomplete(this.input, this.options);
         this.autocomplete.addListener('place_changed', function () {
           getStartPlace = null
           getStartPlace = this.getPlace()
@@ -123,7 +147,7 @@
         });
       },
       autoComplete2() {
-        var self = this;     
+        var self = this;
         this.autocomplete2 = new google.maps.places.Autocomplete(this.input2, this.options);
         this.autocomplete2.addListener('place_changed', function () {
           getEndPlace = null
@@ -134,8 +158,7 @@
         });
       },
       centerMap(pos) {
-        this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
-        var markering = new google.maps.Marker({
+        var marker = new google.maps.Marker({
           position: pos,
           map: this.vueGMap
         })
@@ -174,15 +197,16 @@
           }
         })
       },
-      getLocation(){
+      getCurrentLocation() {
         var self = this
-        navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            }
-            self.centerMap(pos)        
-        }); 
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }
+          console.log(pos);
+          self.centerMap(pos)
+        });
       }
     }
   }
