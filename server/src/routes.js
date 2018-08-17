@@ -14,6 +14,6 @@ module.exports = (app) => {
     app.post('/location', //middleway function to save driver location
         DriverLocationController.saveLocation)
 
-    app.get('/location', //middleway function to save driver location
+    app.get('/location', //middleway function to get all driver location
         DriverLocationController.getLocation)
 }
