@@ -74,6 +74,8 @@
         mode: '',
         timeout: 6000,
         text: 'Please specify both addresses!',
+        id: null,
+        setPoints: []
       }
 
     },
@@ -96,7 +98,10 @@
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
-      this.getLocations()
+      //Get list of available driver locations every 10 seconds
+      setInterval(function () {
+        self.getLocations()
+      }, 10000)
     },
 
     components: {
@@ -110,12 +115,12 @@
         var self = this
         //do a request to the backend for all the driver locations
         var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data 
-        
+
         //Function is delayed to allow google libraries to be loaded first
         setTimeout(function () {
-          for(var i=0; data[i] != undefined; i++){ 
-            self.centerMap(data[i].location);            
-          }        
+          for (var i = 0; data[i] != undefined; i++) {
+            self.centerMap(data[i].location, data[i].socketID);
+          }
         }, 1000);
       },
       createGoogleMaps() {
@@ -157,11 +162,43 @@
           }
         });
       },
-      centerMap(pos) {
-        var marker = new google.maps.Marker({
-          position: pos,
-          map: this.vueGMap
-        })
+      centerMap(pos, socketID) {
+        this.id = socketID
+        var marker
+        var self = this
+        console.log(this.id, "Gayyyyyiiiii", this.setPoints[0]);
+
+        //if there is no existing driver online
+        if (this.setPoints[0] === undefined) {
+          // Marker does not exist - Create it
+          marker = new google.maps.Marker({
+            position: pos,
+            map: self.vueGMap,
+            icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png',
+            id: self.id
+          });
+          //save the marker inside of an array to keep track of the various driver online
+          this.setPoints.push(marker)
+        } else {
+          //Loop until the end of the marker array
+          for (var i = 0; this.setPoints[i] != undefined; i++) {
+            //Validate if both the marker in the array and socket.id is the same
+            if (this.setPoints[i].id === this.id) {
+              //Change the position of the current marker
+              this.setPoints[i].setPosition(pos);
+            } else {
+              // Marker does not exist - Create it
+              marker = new google.maps.Marker({
+                position: pos,
+                map: self.vueGMap,
+                icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png',
+                id: self.id
+              });
+              //save the marker inside of an array to keep track of the various driver online
+              this.setPoints.push(marker)
+            }
+          }
+        }
       },
       googleMapsFailedToLoad() {
         this.vueGMap = 'Error occurred';

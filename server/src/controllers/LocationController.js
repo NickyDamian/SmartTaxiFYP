@@ -6,6 +6,7 @@ module.exports = {
         const driver = await DriverLocation.findOne({
             socketID: socketID
         })
+        //Check if driver exist. If not then create new driver item
         if (!driver) {
             DriverLocation.create(req.body).then(function (location) {
                 res.send({
@@ -19,6 +20,7 @@ module.exports = {
                 console.log(next)
             }); //send back the object to client that res for the endpoint
         }
+        //If driver exist, find the corrent driver and update its location
         else {
             DriverLocation.findOneAndUpdate(
                 {socketID: socketID},

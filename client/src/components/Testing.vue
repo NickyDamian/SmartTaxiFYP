@@ -80,20 +80,22 @@
       }
 
     },
-    sockets: {
-      //Check if connection has been made
-      connect() {
-        socketId = this.$socket.id
-        console.log('Client socket has been connected',socketId)
-      },
-    },
     mounted() {
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
       var self = this
-      navigator.geolocation.getCurrentPosition(success);
-
+      
+      //Check if socket connection has been made
+      socketId = this.$socket.id
+      console.log('Client socket has been connected Kappa',socketId)
+      
+      //Get location of driver every 10 seconds
+      setInterval(function () {
+        navigator.geolocation.getCurrentPosition(success);
+        console.log("Fucktion fired!");        
+      }, 10000)
+      
       function success(position) {
         point = {
           lat: position.coords.latitude,
@@ -102,14 +104,13 @@
         console.log(position.coords.latitude, position.coords.longitude)
         // console.log(socketId, "Kelf Gayyy", point)
 
-        //Save location of driver into the database
-        self.saveDriverLocation(socketId,point)
-
+        //Save location of driver into the database once location of driver is found
+        self.saveDriverLocation(socketId,point)      
+        
         //Emit Events //First parameter is the name of the message  //Second parameter is the actual value        
         // self.$socket.emit('driverLocation', {
         //   message: point
         // })
-
       }
     },
     components: {

@@ -3,7 +3,7 @@ import Router from 'vue-router'
 import Login from '@/components/Login'
 import Register from '@/components/Register'
 import Menu from '@/components/Menu'
-import Test from '@/components/Rere/App-Login'
+import Test from '@/components/Testing'
 
 Vue.use(Router)
 
