@@ -268,9 +268,6 @@
             marker.setPosition(point);
 
           } else {
-            // var icon = {
-            //   url: "..\assets\img\Driver.png"
-            // }
             // Marker does not exist - Create it
             marker = new google.maps.Marker({
               position: point,

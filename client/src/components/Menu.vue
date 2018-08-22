@@ -16,7 +16,8 @@
     <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="findDriver">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
-    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'></ConfirmationDialogBox>
+    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
+      :data='this.setPoints'></ConfirmationDialogBox>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -53,7 +54,7 @@
           }
         },
         globalOptions: () => ({
-          zoom: 16,
+          zoom: 14,
           center: {
             lat: lat1,
             lng: lng1
@@ -73,9 +74,10 @@
         x: null,
         mode: '',
         timeout: 6000,
-        text: 'Please specify both addresses!',
+        text: null,
         id: null,
-        setPoints: []
+        setPoints: [],
+        driverLocationInterval: null
       }
 
     },
@@ -95,13 +97,17 @@
 
     mounted() {
       var self = this
+
+      //Create the map
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
+
+      //Reset the autocompleted place back to null
       getStartPlace = null
       getEndPlace = null
-      //Get list of available driver locations every 10 seconds
-      setInterval(function () {
-        self.getLocations()
-      }, 10000)
+
+      //Start interval for getting driver location
+      this.startTheInterval()
+
     },
 
     components: {
@@ -111,15 +117,21 @@
     },
 
     methods: {
+      startTheInterval() {
+        var self = this
+        //Get list of available driver locations every 10 seconds
+        this.driverLocationInterval = setInterval(function () {
+          self.getLocations()
+        }, 10000)
+      },
       async getLocations() {
         var self = this
         //do a request to the backend for all the driver locations
-        var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data 
-
+        var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data      
         //Function is delayed to allow google libraries to be loaded first
         setTimeout(function () {
           for (var i = 0; data[i] != undefined; i++) {
-            self.centerMap(data[i].location, data[i].socketID);
+            self.centerMap(data[i].location, data[i].socketID, i);
           }
         }, 1000);
       },
@@ -127,7 +139,7 @@
         return new Promise((resolve, reject) => {
           let gmap = document.createElement('script')
           gmap.src =
-            "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places"
+            "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places,geometry"
           gmap.type = 'text/javascript'
           gmap.onload = resolve
           gmap.onerror = reject
@@ -162,60 +174,47 @@
           }
         });
       },
-      centerMap(pos, socketID) {
+      centerMap(pos, socketID, i) {
         this.id = socketID
         var marker
         var self = this
-        console.log(this.id, "Gayyyyyiiiii", this.setPoints[0]);
-
-        //if there is no existing driver online
-        if (this.setPoints[0] === undefined) {
-          // Marker does not exist - Create it
+        console.log("Kelf kappa pride", this.setPoints)
+        //Check if the driver has his own unique marker
+        if (this.setPoints[i] === undefined) {
           marker = new google.maps.Marker({
             position: pos,
             map: self.vueGMap,
             icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png',
-            id: self.id
+            id: self.id //Save marker with its unique driver id (socket ID)
           });
           //save the marker inside of an array to keep track of the various driver online
           this.setPoints.push(marker)
         } else {
-          //Loop until the end of the marker array
-          for (var i = 0; this.setPoints[i] != undefined; i++) {
-            //Validate if both the marker in the array and socket.id is the same
-            if (this.setPoints[i].id === this.id) {
-              //Change the position of the current marker
-              this.setPoints[i].setPosition(pos);
-            } else {
-              // Marker does not exist - Create it
-              marker = new google.maps.Marker({
-                position: pos,
-                map: self.vueGMap,
-                icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png',
-                id: self.id
-              });
-              //save the marker inside of an array to keep track of the various driver online
-              this.setPoints.push(marker)
-            }
-          }
+          //Change the position of the current marker
+          this.setPoints[i].setPosition(pos);
         }
       },
       googleMapsFailedToLoad() {
         this.vueGMap = 'Error occurred';
       },
       findDriver() {
+        var self = this
         if (getStartPlace != null && getEndPlace != null) {
-          this.$store.dispatch('setMenuConfirmation', true)
+          self.$store.dispatch('setMenuConfirmation', true)        
         } else {
           this.snackbar = true
+          this.text = 'Please specify both addresses!'
         }
       },
       getRoute() {
+        //Clear the pre-existed marker with old map reference
+        this.setPoints = []
+
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
         this.directionsDisplay = new google.maps.DirectionsRenderer()
-        this.directionsDisplay.setMap(this.vueGMap)
         var vm = this
+        vm.directionsDisplay.setMap(this.vueGMap)
         vm.directionsService.route({
           origin: {
             lat: getStartPlace.geometry.location.lat(),

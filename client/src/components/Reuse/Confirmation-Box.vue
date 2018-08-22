@@ -58,14 +58,21 @@
         widgets: false,
         interval: {},
         value: 0,
-        show: false
+        show: false,
+        dataOnDriverLocations: this.data,
+        radiusOfDriverDistance: []
       }
     },
     props: [
       'time',
       'address',
-      'money'
+      'money',
+      'data'
     ],
+    mounted () {
+      // console.log(this.data[0][1])
+      console.log(this.data)
+    },
     methods: {
       confirmationBoxDisplay() {
         this.$store.dispatch('setMenuConfirmation', false)
@@ -73,10 +80,37 @@
       setProgress() {
         this.interval = setInterval(() => {
           if (this.value === 100) {
-            return (this.value = 0)
+            this.getCurrentPosition();
+            clearInterval(this.interval)
+            return (this.value = 100);            
           }
           this.value += 10
         }, 1000)
+      },
+      compareDistance(currentUserPos) {
+        //Calculate radius between all available drivers
+        for (var i = 0; this.dataOnDriverLocations[i] != undefined; i++) {
+
+          //Compare the driver postion with the user's location and save in array
+          //Compute the distance between two points only accept LatLng objects and returns the value in meters //divide by 1000 to get in km
+          //Calculated by the default radius of the earth, so distance will be 0.1% off
+          var radius = (google.maps.geometry.spherical.computeDistanceBetween(currentUserPos, this.dataOnDriverLocations[i].position) / 1000).toFixed(2)
+          this.radiusOfDriverDistance.push([radius,this.dataOnDriverLocations[i].id])         
+        }
+        console.log(this.radiusOfDriverDistance, "No Kappa Pride Baby");   
+      },
+      getCurrentPosition(){
+        var self = this
+        //Get user's current postition
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var currentUserPos = new google.maps.LatLng({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+
+          console.log(position.coords.latitude,position.coords.longitude, "Kappa Pride Baby");
+          self.compareDistance(currentUserPos);
+        });
       }
     },
     beforeDestroy() {
