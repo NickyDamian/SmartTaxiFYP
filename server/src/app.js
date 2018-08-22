@@ -32,6 +32,6 @@ io.on('connection', function(socket) { //Each client will have their own socket
 
     //function executes when socket "driver-location" message enters into the server
     socket.on('driverLocation', function(data){
-        io.sockets.emit('driverLocation',data) //sending the data back to all other sockets on the client side that is listening to the "driver-location" message
+        io.to(data.id).emit('driverLocation',data) //sending the data back to all other sockets on the client side that is listening to the "driver-location" message
     })
 });

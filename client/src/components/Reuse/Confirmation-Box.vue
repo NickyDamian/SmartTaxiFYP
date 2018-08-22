@@ -69,7 +69,7 @@
       'money',
       'data'
     ],
-    mounted () {
+    mounted() {
       // console.log(this.data[0][1])
       console.log(this.data)
     },
@@ -82,10 +82,33 @@
           if (this.value === 100) {
             this.getCurrentPosition();
             clearInterval(this.interval)
-            return (this.value = 100);            
+            return (this.value = 100);
           }
           this.value += 10
         }, 1000)
+      },
+      findDriverWithShortestDistance() {
+        var minimum = 1000 //Base number as 1000 since radius won't cover pass that (Not suitable for real production)
+        var shortestDistanceDriver
+        var self = this
+        //Iterate through each array ITEM in the array
+        for(var i=0; i<this.radiusOfDriverDistance.length; ++i){
+          //Iterate through each item in the sub-array
+          for(var j=0; j<this.radiusOfDriverDistance[i].length; ++j){
+            //Compare the radius. If smaller, save as the new minimum
+            minimum = Math.min(minimum, this.radiusOfDriverDistance[i][0])
+            //Save the driver object with the shortest radius distance
+            if(minimum == this.radiusOfDriverDistance[i][0]){
+              shortestDistanceDriver = this.radiusOfDriverDistance[i]
+            }
+          }
+        }
+        console.log(minimum, shortestDistanceDriver[1])
+        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value        
+        this.$socket.emit('driverLocation', {
+          message: "kappa",
+          id: shortestDistanceDriver[1]
+        })
       },
       compareDistance(currentUserPos) {
         //Calculate radius between all available drivers
@@ -94,12 +117,14 @@
           //Compare the driver postion with the user's location and save in array
           //Compute the distance between two points only accept LatLng objects and returns the value in meters //divide by 1000 to get in km
           //Calculated by the default radius of the earth, so distance will be 0.1% off
-          var radius = (google.maps.geometry.spherical.computeDistanceBetween(currentUserPos, this.dataOnDriverLocations[i].position) / 1000).toFixed(2)
-          this.radiusOfDriverDistance.push([radius,this.dataOnDriverLocations[i].id])         
+          var radius = (google.maps.geometry.spherical.computeDistanceBetween(currentUserPos, this.dataOnDriverLocations[
+            i].position) / 1000).toFixed(2)
+          this.radiusOfDriverDistance.push([radius, this.dataOnDriverLocations[i].id])
         }
-        console.log(this.radiusOfDriverDistance, "No Kappa Pride Baby");   
+        console.log(this.radiusOfDriverDistance, "No Kappa Pride Baby");
+        this.findDriverWithShortestDistance()
       },
-      getCurrentPosition(){
+      getCurrentPosition() {
         var self = this
         //Get user's current postition
         navigator.geolocation.getCurrentPosition(function (position) {
@@ -108,7 +133,7 @@
             lng: position.coords.longitude
           });
 
-          console.log(position.coords.latitude,position.coords.longitude, "Kappa Pride Baby");
+          console.log(position.coords.latitude, position.coords.longitude, "Kappa Pride Baby");
           self.compareDistance(currentUserPos);
         });
       }

@@ -80,6 +80,17 @@
       }
 
     },
+    sockets: {
+      //Check if connection has been made
+      connect() {
+        console.log('Client Socket has been connected')
+      },
+      //Listen for event on any driver-location messagefrom the server
+      driverLocation(data) {
+        // console.log(data.message.lat, data.message.lng);
+        console.log(data);
+      }
+    },
     mounted() {
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null

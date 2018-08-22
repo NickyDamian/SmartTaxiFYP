@@ -178,7 +178,7 @@
         this.id = socketID
         var marker
         var self = this
-        console.log("Kelf kappa pride", this.setPoints)
+        
         //Check if the driver has his own unique marker
         if (this.setPoints[i] === undefined) {
           marker = new google.maps.Marker({
