@@ -104,10 +104,11 @@
           }
         }
         console.log(minimum, shortestDistanceDriver[1])
-        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value        
+        console.log('Client socket has been connected Kappa',this.$socket.id)
+        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value       
         this.$socket.emit('driverLocation', {
-          message: "kappa",
-          id: shortestDistanceDriver[1]
+          driverId: shortestDistanceDriver[1],
+          passengerId: this.$socket.id
         })
       },
       compareDistance(currentUserPos) {

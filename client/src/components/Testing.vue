@@ -17,7 +17,7 @@
     <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="addmarker">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
-    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'></ConfirmationDialogBox>
+    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money' :passengerId='this.passengerId'></DriverConfirmationDialogBox>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -31,7 +31,7 @@
 <script>
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
-  import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
+  import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
   import LocationService from '@/services/LocationService'
   var getStartPlace
   var getEndPlace
@@ -76,7 +76,8 @@
         x: null,
         mode: '',
         timeout: 6000,
-        text: 'Please specify both addresses!'
+        text: 'Please specify both addresses!',
+        passengerId: null
       }
 
     },
@@ -88,7 +89,8 @@
       //Listen for event on any driver-location messagefrom the server
       driverLocation(data) {
         // console.log(data.message.lat, data.message.lng);
-        console.log(data);
+        this.passengerId = data.passengerId
+        this.$store.dispatch('setDriverMenuConfirmation', true)
       }
     },
     mounted() {
@@ -99,7 +101,7 @@
       
       //Check if socket connection has been made
       socketId = this.$socket.id
-      console.log('Client socket has been connected Kappa',socketId)
+      console.log('Client socket has been connected Kappa',this.$socket.id)
       
       //Get location of driver every 10 seconds
       setInterval(function () {
@@ -127,7 +129,7 @@
     components: {
       Footer,
       SideNavigation,
-      ConfirmationDialogBox
+      DriverConfirmationDialogBox
     },
     methods: {
       async saveDriverLocation(socketID, location) {

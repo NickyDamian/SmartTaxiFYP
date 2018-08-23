@@ -88,16 +88,30 @@
         console.log('Client Socket has been connected')
       },
       //Listen for event on any driver-location messagefrom the server
-      driverLocation(data) {
-        // console.log(data.message.lat, data.message.lng);
+      requestStatus(data) {
         console.log(data);
-        this.centerMap(data.message)
+        this.$store.dispatch('setMenuConfirmation', false)
+        if(data.message === 'Accepted') {
+          // console.log("hi")
+          // console.log(this.setPoints[0].id)
+          // console.log(this.setPoints)
+          for(var i = 0; this.setPoints[i] != undefined; ++i){
+            this.setPoints[i]
+            if(data.driverId === this.setPoints[i].id){
+              console.log(data.driverId,"delete",this.setPoints[i].id)
+            }
+          }
+        }
+        else {
+          this.snackbar = true
+          this.text = 'Driver Unavailable. Please try again!'
+        }
       }
     },
 
     mounted() {
       var self = this
-
+      console.log('Client socket has been connected Kappa',this.$socket.id)
       //Create the map
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
 
@@ -193,14 +207,14 @@
           //Change the position of the current marker
           this.setPoints[i].setPosition(pos);
         }
+        console.log(this.setPoints[0].id)
       },
       googleMapsFailedToLoad() {
         this.vueGMap = 'Error occurred';
       },
       findDriver() {
-        var self = this
         if (getStartPlace != null && getEndPlace != null) {
-          self.$store.dispatch('setMenuConfirmation', true)        
+          this.$store.dispatch('setMenuConfirmation', true)        
         } else {
           this.snackbar = true
           this.text = 'Please specify both addresses!'

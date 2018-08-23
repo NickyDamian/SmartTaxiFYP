@@ -32,6 +32,11 @@ io.on('connection', function(socket) { //Each client will have their own socket
 
     //function executes when socket "driver-location" message enters into the server
     socket.on('driverLocation', function(data){
-        io.to(data.id).emit('driverLocation',data) //sending the data back to all other sockets on the client side that is listening to the "driver-location" message
+        io.to(data.driverId).emit('driverLocation',data) //sending the data back to all other sockets on the client side that is listening to the "driver-location" message
+    })
+
+    //Send request status back to passenger if driver accepted or declined
+    socket.on('requestStatus', function(data){
+        io.to(data.passengerId).emit('requestStatus',data) //sending the data back to all other sockets on the client side that is listening to the "driver-location" message
     })
 });
