@@ -42,6 +42,7 @@
 </template>
 
 <script>
+import LocationService from '@/services/LocationService'
   export default {
     data() {
       return {
@@ -49,35 +50,54 @@
         notifications: false,
         sound: true,
         widgets: false,
+        passengerId: this.passengerID
       }
     },
     props: [
       'time',
       'address',
       'money',
-      'passengerId'
+      'passengerID'
     ],
     mounted() {
       // console.log(this.data[0][1])
-      console.log(this.passengerId)
+      // console.log(this.passengerId)
     },
     methods: {
       confirmationBoxDisplay() {
         this.$store.dispatch('setDriverMenuConfirmation', false)
       },
       acceptRequest() {
+        this.stopInterval = 
+        
+        this.$socket.emit('requestStatusToAll', {
+          driverId: this.$socket.id,
+        })
+        
         this.$socket.emit('requestStatus', {
           message: "Accepted",
-          driverId: this.$socket.id,
           passengerId: this.passengerId
-        }) 
+        })
+        
+        //Stop interval function when driver accept request
+        this.$store.dispatch('setDriverIntervalStatus', true)
+        //Delete driver location from available driver collection
+        this.deleteDriverFromServer()
       },
       declineRequest() {
         this.$socket.emit('requestStatus', {
           message: "Declined",
-          driverId: this.$socket.id,
           passengerId: this.passengerId
-        }) 
+        })
+      },
+      async deleteDriverFromServer () {
+        try {
+          const response = await LocationService.deleteLocation({
+            socketID: this.$socket.id
+          })
+        } catch (error) {
+          this.error = error.response.data.error
+        }
       },
       getCurrentPosition() {
         var self = this

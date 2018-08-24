@@ -16,7 +16,7 @@
           <v-btn color="grey lighten-5" class="option-button">
             <v-icon>linear_scale</v-icon>
           </v-btn>
-          <v-btn dark color="secondary" @click.native="confirmationBoxDisplay, show=true, setProgress()">Book</v-btn>
+          <v-btn dark color="secondary" @click.native="confirmationBoxDisplay, show=true, setProgress(),getCurrentPosition();">Book</v-btn>
         </v-flex>
         <v-flex class="pt-2 pb-2 time-label">
           <label>Time Estimation</label>
@@ -80,9 +80,7 @@
       setProgress() {
         this.interval = setInterval(() => {
           if (this.value === 100) {
-            this.getCurrentPosition();
-            clearInterval(this.interval)
-            return (this.value = 100);
+            return (this.value = 0);
           }
           this.value += 10
         }, 1000)
@@ -106,7 +104,7 @@
         console.log(minimum, shortestDistanceDriver[1])
         console.log('Client socket has been connected Kappa',this.$socket.id)
         //Emit Events //First parameter is the name of the message  //Second parameter is the actual value       
-        this.$socket.emit('driverLocation', {
+        this.$socket.emit('sendRequest', {
           driverId: shortestDistanceDriver[1],
           passengerId: this.$socket.id
         })

@@ -48,6 +48,23 @@ module.exports = {
         }
         
     },
+    async deleteLocation(req,res) {
+        const {socketID} = req.body
+        console.log(socketID,"Kappppppaaaa    Priddeee")
+        //remove driver from the available driver collection in mongodb
+        await DriverLocation.remove({
+            socketID: socketID
+        }).then(
+            res.send({
+                message: "Driver has been removed from database"
+            })
+        ).catch(next => {
+            if(next.name == 'MongoError'){
+                res.status(400).send({error: 'Error deleting Driver Location'})
+            }
+            console.log(next)
+        })
+    },
     async getLocation(req,res) {
         try {
             const location = await DriverLocation.find().limit(10) //Send back only the first 10 searches

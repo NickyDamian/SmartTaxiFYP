@@ -87,25 +87,32 @@
       connect() {
         console.log('Client Socket has been connected')
       },
-      //Listen for event on any driver-location messagefrom the server
-      requestStatus(data) {
-        console.log(data);
-        this.$store.dispatch('setMenuConfirmation', false)
-        if(data.message === 'Accepted') {
-          // console.log("hi")
-          // console.log(this.setPoints[0].id)
-          // console.log(this.setPoints)
+      requestStatusToAll(data) {
+        //Clear driver from the marker array and maps to avoid messing the sync-data (driver no longer available)
           for(var i = 0; this.setPoints[i] != undefined; ++i){
-            this.setPoints[i]
             if(data.driverId === this.setPoints[i].id){
-              console.log(data.driverId,"delete",this.setPoints[i].id)
+              var removeThisMarkerFromMap = this.setPoints[i]
+              removeThisMarkerFromMap.setMap(null) //Remove marker from maps
+              this.setPoints.splice(i,1) //Remove marker from array
             }
           }
+      },
+      //Listen for event on any message from the server
+      //request Status is triggered when driver accepts or declines the request
+      requestStatus(data) {
+        this.$store.dispatch('setMenuConfirmation', false) //Hide confirm ride booking box
+
+        //Delete the driver from the marker array since driver is no longer available
+        if(data.message == 'Accepted') {
+          clearInterval(this.driverLocationInterval) //Clear the interval so it stop showing other driver markers
+          this.setPoints = [] //Clear all the available driver markers
         }
         else {
           this.snackbar = true
           this.text = 'Driver Unavailable. Please try again!'
         }
+        //Refresh the map without markers
+        this.getRoute()
       }
     },
 

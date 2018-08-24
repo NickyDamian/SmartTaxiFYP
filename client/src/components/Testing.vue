@@ -14,10 +14,11 @@
       </div>
     </div>
     <div style="height:100%;width:100%" id="map"></div>
-    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="addmarker">
+    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="getTrackingLocation">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
-    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money' :passengerId='this.passengerId'></DriverConfirmationDialogBox>
+    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
+      :passengerID='this.passengerID'></DriverConfirmationDialogBox>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -41,7 +42,7 @@
     lat: 3.1973376,
     lng: 101.76102399999999
   }
-  var socketId 
+  var socketId
   export default {
     data() {
       return {
@@ -77,7 +78,9 @@
         mode: '',
         timeout: 6000,
         text: 'Please specify both addresses!',
-        passengerId: null
+        sendCurrentLocationInterval: null,
+        checkIntervalRequest: false,
+        passengerID: null
       }
 
     },
@@ -87,9 +90,8 @@
         console.log('Client Socket has been connected')
       },
       //Listen for event on any driver-location messagefrom the server
-      driverLocation(data) {
-        // console.log(data.message.lat, data.message.lng);
-        this.passengerId = data.passengerId
+      sendRequest(data) {
+        this.passengerID = data.passengerId
         this.$store.dispatch('setDriverMenuConfirmation', true)
       }
     },
@@ -98,17 +100,17 @@
       getStartPlace = null
       getEndPlace = null
       var self = this
-      
+
       //Check if socket connection has been made
       socketId = this.$socket.id
-      console.log('Client socket has been connected Kappa',this.$socket.id)
-      
+      console.log('Client socket has been connected Kappa', this.$socket.id)
+
       //Get location of driver every 10 seconds
-      setInterval(function () {
+      this.sendCurrentLocationInterval = setInterval(function () {
         navigator.geolocation.getCurrentPosition(success);
-        console.log("Fucktion fired!");        
+        console.log("Fucktion fired!");
       }, 10000)
-      
+
       function success(position) {
         point = {
           lat: position.coords.latitude,
@@ -118,12 +120,16 @@
         // console.log(socketId, "Kelf Gayyy", point)
 
         //Save location of driver into the database once location of driver is found
-        self.saveDriverLocation(socketId,point)      
-        
-        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value        
-        // self.$socket.emit('driverLocation', {
-        //   message: point
-        // })
+        self.saveDriverLocation(socketId, point)
+
+        //check request status before clearing the send driver location interval
+        setInterval(function () {
+          if(self.$store.state.stopDriverInterval) {
+            clearInterval(self.sendCurrentLocationInterval)
+            self.$store.dispatch('setDriverIntervalStatus', false)
+          }
+        }, 1000)
+
       }
     },
     components: {
@@ -132,6 +138,11 @@
       DriverConfirmationDialogBox
     },
     methods: {
+      stopInterval() {
+        // if(this.checkIntervalRequest) {
+        //   clearInterval(this.sendCurrentLocationInterval)
+        // }
+      },
       async saveDriverLocation(socketID, location) {
         try {
           const response = await LocationService.saveLocation({

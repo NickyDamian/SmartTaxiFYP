@@ -16,4 +16,7 @@ module.exports = (app) => {
 
     app.get('/location', //middleway function to get all driver location
         DriverLocationController.getLocation)
+    
+    app.post('/deletelocation', //middleway function to delete driver location 
+        DriverLocationController.deleteLocation)
 }

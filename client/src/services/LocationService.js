@@ -4,6 +4,9 @@ export default {
     saveLocation (position) {
         return Api().post('location', position);
     },
+    deleteLocation (id) {
+        return Api().post('deletelocation', id);
+    },
     getLocation () {
         return Api().get('location');
     }
