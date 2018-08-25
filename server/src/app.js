@@ -44,4 +44,9 @@ io.on('connection', function(socket) { //Each client will have their own socket
     socket.on('requestStatus', function(data){
         io.to(data.passengerId).emit('requestStatus',data) //sending the request status back to the passenger that requested for a ride
     })
+
+    //Send location of selected driver and watch his position
+    socket.on('sendTheSelectedDriverLocation', function(data){
+        io.to(data.passengerId).emit('sendTheSelectedDriverLocation',data)
+    })
 });

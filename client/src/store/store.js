@@ -8,7 +8,9 @@ export default new Vuex.Store({
     state: {
         MenuConfirmation: false,
         DriverMenuConfirmation: false,
-        stopDriverInterval: false
+        stopDriverInterval: false,
+        passengerStartLocation: null,
+        passengerEndLocation: null
     }, //keeping track of changes
 
     mutations: {
@@ -20,6 +22,12 @@ export default new Vuex.Store({
         },
         setDriverIntervalStatus (state, stopDriverInterval){
             state.stopDriverInterval = stopDriverInterval
+        },
+        setPassengerStartLocation (state, passengerStartLocation){
+            state.passengerStartLocation = passengerStartLocation
+        },
+        setPassengerEndLocation (state, passengerEndLocation){
+            state.passengerEndLocation = passengerEndLocation
         }
     },
     actions: {
@@ -32,5 +40,11 @@ export default new Vuex.Store({
         setDriverIntervalStatus ({commit}, stopDriverInterval) {
             commit('setDriverIntervalStatus', stopDriverInterval) //do async calls/logic
         },
+        setPassengerStartLocation ({commit}, passengerStartLocation) {
+            commit('setPassengerStartLocation', passengerStartLocation) //do async calls/logic
+        },
+        setPassengerEndLocation ({commit}, passengerEndLocation) {
+            commit('setPassengerEndLocation', passengerEndLocation) //do async calls/logic
+        }
     }
 })

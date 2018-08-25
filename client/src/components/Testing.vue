@@ -46,6 +46,8 @@
   export default {
     data() {
       return {
+        start: null,
+        end: null,
         vueGMap: null,
         confirm: true,
         time: 45,
@@ -91,7 +93,10 @@
       },
       //Listen for event on any driver-location messagefrom the server
       sendRequest(data) {
+        console.log(data.startLocation, "Baby", data.endLocation)
         this.passengerID = data.passengerId
+        this.start = data.startLocation
+        this.end = data.endLocation
         this.$store.dispatch('setDriverMenuConfirmation', true)
       }
     },
@@ -105,32 +110,18 @@
       socketId = this.$socket.id
       console.log('Client socket has been connected Kappa', this.$socket.id)
 
-      //Get location of driver every 10 seconds
-      this.sendCurrentLocationInterval = setInterval(function () {
-        navigator.geolocation.getCurrentPosition(success);
-        console.log("Fucktion fired!");
-      }, 10000)
+      //Fired function to update driver location in the server every 10 seconds
+      this.updateLocationOnServer()
 
-      function success(position) {
-        point = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+      //check request status before clearing the send driver location interval
+      setInterval(function () {
+        if (self.$store.state.stopDriverInterval) {
+          clearInterval(self.sendCurrentLocationInterval)
+          self.$store.dispatch('setDriverIntervalStatus', false)
+          self.getTrackingLocation()
+          self.getRoute()
         }
-        console.log(position.coords.latitude, position.coords.longitude)
-        // console.log(socketId, "Kelf Gayyy", point)
-
-        //Save location of driver into the database once location of driver is found
-        self.saveDriverLocation(socketId, point)
-
-        //check request status before clearing the send driver location interval
-        setInterval(function () {
-          if(self.$store.state.stopDriverInterval) {
-            clearInterval(self.sendCurrentLocationInterval)
-            self.$store.dispatch('setDriverIntervalStatus', false)
-          }
-        }, 1000)
-
-      }
+      }, 1000)
     },
     components: {
       Footer,
@@ -138,10 +129,22 @@
       DriverConfirmationDialogBox
     },
     methods: {
-      stopInterval() {
-        // if(this.checkIntervalRequest) {
-        //   clearInterval(this.sendCurrentLocationInterval)
-        // }
+      updateLocationOnServer() {
+        var self = this
+        //Get location of driver every 10 seconds
+        this.sendCurrentLocationInterval = setInterval(function () {
+          navigator.geolocation.getCurrentPosition(success);
+          console.log("Fucktion fired!");
+        }, 10000)
+
+        function success(position) {
+          point = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }
+          //Save location of driver into the database once location of driver is found
+          self.saveDriverLocation(socketId, point)
+        }
       },
       async saveDriverLocation(socketID, location) {
         try {
@@ -203,6 +206,7 @@
         }
       },
       getRoute() {
+        // console.log(point, '1 ', point.lat(), '2 ', point.lng())
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
         this.directionsDisplay = new google.maps.DirectionsRenderer()
@@ -210,12 +214,12 @@
         var vm = this
         vm.directionsService.route({
           origin: {
-            lat: getStartPlace.geometry.location.lat(),
-            lng: getStartPlace.geometry.location.lng()
+            lat: point.lat,
+            lng: point.lng
           },
           destination: {
-            lat: getEndPlace.geometry.location.lat(),
-            lng: getEndPlace.geometry.location.lng()
+            lat: this.start.geometry.location.lat,
+            lng: this.start.geometry.location.lng
           },
           travelMode: 'DRIVING'
         }, function (response, status) {
@@ -226,81 +230,39 @@
           }
         })
       },
-      addmarker() {
-        var marker = new google.maps.Marker({
-          position: point,
-          map: this.vueGMap
-        });
-        console.log(point)
-        point = {
-          lat: 3.1983376,
-          lng: 101.76112399999999
-        }
-      },
-      // getTrackingLocation1() {
-      //   var self = this
-      //   var marker = null
-      //   var current
-      //   navigator.geolocation.getCurrentPosition(function (position) {
-      //     console.log("kappa");
-
-      //     var point = new google.maps.LatLng(position.coords.latitude,
-      //       position.coords.longitude);
-
-      //     console.log(position.coords.latitude, "Kappa Prideeee",
-      //       position.coords.longitude);
-
-
-      //     if (marker && point != current) {
-      //       // Marker already created - Move it
-      //       marker.setPosition(point);
-
-      //     } else if (marker === null) {
-      //       // Marker does not exist - Create it
-      //       marker = new google.maps.Marker({
-      //         position: point,
-      //         map: self.vueGMap
-      //       });
-      //       current = point
-      //     }
-      //     // Center the map on the new position
-      //     self.vueGMap.setCenter(point);
-      //   });
-      // },
-      // test() {
-      //   this.getTrackingLocation()
-      //   setInterval(() => {
-      //     this.getTrackingLocation()
-      //   }, 10000)
-      // },
       getTrackingLocation() {
+        console.log(point, '1 ')
+        console.log(this.start.geometry, '2 ')
+        // console.log(getStartPlace, '3 ')
         var watchID;
         var geoLoc;
         var marker;
         var self = this;
 
         function showLocation(position) {
-          var point = new google.maps.LatLng(position.coords.latitude,
+          var loc = new google.maps.LatLng(position.coords.latitude,
             position.coords.longitude);
 
-          console.log(position.coords.latitude, "Kappa Prideeee",
-            position.coords.longitude);
-
+          console.log(loc, "Kappa Prideeee");
+          self.$socket.emit('sendTheSelectedDriverLocation', {
+            location: loc,
+            passengerId: self.passengerID
+          })
 
           if (marker) {
             // Marker already created - Move it
-            marker.setPosition(point);
+            marker.setPosition(loc);
 
           } else {
             // Marker does not exist - Create it
             marker = new google.maps.Marker({
-              position: point,
+              position: loc,
               map: self.vueGMap,
               icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png'
             });
           }
           // Center the map on the new position
-          self.vueGMap.setCenter(point);
+          self.vueGMap.setCenter(loc);
         }
 
         function errorHandler(err) {

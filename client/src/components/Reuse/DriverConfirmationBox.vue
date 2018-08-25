@@ -77,12 +77,10 @@ import LocationService from '@/services/LocationService'
         this.$socket.emit('requestStatus', {
           message: "Accepted",
           passengerId: this.passengerId
-        })
+        })   
         
-        //Stop interval function when driver accept request
-        this.$store.dispatch('setDriverIntervalStatus', true)
-        //Delete driver location from available driver collection
-        this.deleteDriverFromServer()
+        this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
+        this.deleteDriverFromServer() //Delete driver location from available driver collection
       },
       declineRequest() {
         this.$socket.emit('requestStatus', {

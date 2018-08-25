@@ -17,7 +17,7 @@
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
-      :data='this.setPoints'></ConfirmationDialogBox>
+      :data='this.setPoints' :start='this.start' :end='this.end'></ConfirmationDialogBox>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -43,6 +43,9 @@
   export default {
     data() {
       return {
+        start: null,
+        end: null,
+        marker: null,
         vueGMap: null,
         confirm: true,
         time: 45,
@@ -89,13 +92,13 @@
       },
       requestStatusToAll(data) {
         //Clear driver from the marker array and maps to avoid messing the sync-data (driver no longer available)
-          for(var i = 0; this.setPoints[i] != undefined; ++i){
-            if(data.driverId === this.setPoints[i].id){
-              var removeThisMarkerFromMap = this.setPoints[i]
-              removeThisMarkerFromMap.setMap(null) //Remove marker from maps
-              this.setPoints.splice(i,1) //Remove marker from array
-            }
+        for (var i = 0; this.setPoints[i] != undefined; ++i) {
+          if (data.driverId === this.setPoints[i].id) {
+            var removeThisMarkerFromMap = this.setPoints[i]
+            removeThisMarkerFromMap.setMap(null) //Remove marker from maps
+            this.setPoints.splice(i, 1) //Remove marker from array
           }
+        }
       },
       //Listen for event on any message from the server
       //request Status is triggered when driver accepts or declines the request
@@ -103,22 +106,37 @@
         this.$store.dispatch('setMenuConfirmation', false) //Hide confirm ride booking box
 
         //Delete the driver from the marker array since driver is no longer available
-        if(data.message == 'Accepted') {
+        if (data.message == 'Accepted') {
           clearInterval(this.driverLocationInterval) //Clear the interval so it stop showing other driver markers
           this.setPoints = [] //Clear all the available driver markers
-        }
-        else {
+        } else {
           this.snackbar = true
           this.text = 'Driver Unavailable. Please try again!'
         }
         //Refresh the map without markers
         this.getRoute()
+      },
+      //Watch the location of the driver once request has been accepted
+      sendTheSelectedDriverLocation(data) {
+        var self = this
+        if (this.marker) {
+          // Marker already created - Move it
+          this.marker.setPosition(data.location);
+
+        } else {
+          // Marker does not exist - Create it
+          this.marker = new google.maps.Marker({
+            position: data.location,
+            map: self.vueGMap,
+            icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png'
+          });
+        }
       }
     },
 
     mounted() {
       var self = this
-      console.log('Client socket has been connected Kappa',this.$socket.id)
+      console.log('Client socket has been connected Kappa', this.$socket.id)
       //Create the map
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
 
@@ -179,6 +197,7 @@
         this.autocomplete.addListener('place_changed', function () {
           getStartPlace = null
           getStartPlace = this.getPlace()
+          self.start = this.getPlace()
           if (getStartPlace != null && getEndPlace != null) {
             self.getRoute()
           }
@@ -190,6 +209,7 @@
         this.autocomplete2.addListener('place_changed', function () {
           getEndPlace = null
           getEndPlace = this.getPlace()
+          self.end = this.getPlace()
           if (getStartPlace != null && getEndPlace != null) {
             self.getRoute()
           }
@@ -199,7 +219,7 @@
         this.id = socketID
         var marker
         var self = this
-        
+
         //Check if the driver has his own unique marker
         if (this.setPoints[i] === undefined) {
           marker = new google.maps.Marker({
@@ -221,7 +241,7 @@
       },
       findDriver() {
         if (getStartPlace != null && getEndPlace != null) {
-          this.$store.dispatch('setMenuConfirmation', true)        
+          this.$store.dispatch('setMenuConfirmation', true)
         } else {
           this.snackbar = true
           this.text = 'Please specify both addresses!'
