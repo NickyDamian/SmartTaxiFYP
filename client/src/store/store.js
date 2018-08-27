@@ -6,11 +6,13 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
-        MenuConfirmation: false,
-        DriverMenuConfirmation: false,
-        stopDriverInterval: false,
-        passengerStartLocation: null,
-        passengerEndLocation: null
+        MenuConfirmation: false, //menu confirmation before booking for a ride (Passenger)
+        DriverMenuConfirmation: false, //menu confirmation before accepting a request (Driver)
+        stopDriverInterval: false, //Stop the interval when driver has accepted a request
+        passengerStartLocation: null, //Save the passenger Start Location (Wil be reused)
+        passengerEndLocation: null, //Save the passenger End Location (Will be reused)
+        typeOfUser: null, //Display the different type of ride info based on the type of user
+        rideInfo: false
     }, //keeping track of changes
 
     mutations: {
@@ -28,6 +30,12 @@ export default new Vuex.Store({
         },
         setPassengerEndLocation (state, passengerEndLocation){
             state.passengerEndLocation = passengerEndLocation
+        },
+        setTypeOfUser (state, typeOfUser){
+            state.typeOfUser = typeOfUser
+        },
+        setRideInfo (state, rideInfo){
+            state.rideInfo = rideInfo
         }
     },
     actions: {
@@ -45,6 +53,12 @@ export default new Vuex.Store({
         },
         setPassengerEndLocation ({commit}, passengerEndLocation) {
             commit('setPassengerEndLocation', passengerEndLocation) //do async calls/logic
+        },
+        setTypeOfUser ({commit}, typeOfUser) {
+            commit('setTypeOfUser', typeOfUser) //do async calls/logic
+        },
+        setRideInfo ({commit}, rideInfo) {
+            commit('setRideInfo', rideInfo) //do async calls/logic
         }
     }
 })

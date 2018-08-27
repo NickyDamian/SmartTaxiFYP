@@ -1,24 +1,16 @@
 <template>
   <v-app>
-    <SideNavigation></SideNavigation>
-    <div>
-      <!-- <img class="logo" src="..\assets\img\Driver.png" style="margin-top:70px;"> -->
-      <div class="start-location">
-        <v-icon color="blue" class="pl-2">map</v-icon>
-        <input class="search-box" @click="autoComplete" id="pac-input" type="text" placeholder="Starting location">
-      </div>
-      <v-divider></v-divider>
-      <div class="end-location">
-        <v-icon color="red" class="pl-2">location_on</v-icon>
-        <input class="search-box" @click="autoComplete2" id="pac-input2" type="text" placeholder="I'm going to...">
-      </div>
-    </div>
+    <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
     <div style="height:100%;width:100%" id="map"></div>
-    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="getTrackingLocation">
+    <!-- <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="getTrackingLocation">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
+    </v-btn> -->
+    <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
+      <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
     <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
       :passengerID='this.passengerID'></DriverConfirmationDialogBox>
+    <RideInfo v-if="$store.state.rideInfo"></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -33,6 +25,7 @@
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
+  import RideInfo from './Reuse/InTransitStatusPage.vue'
   import LocationService from '@/services/LocationService'
   var getStartPlace
   var getEndPlace
@@ -46,6 +39,7 @@
   export default {
     data() {
       return {
+        rideInfo: false,
         start: null,
         end: null,
         vueGMap: null,
@@ -101,6 +95,7 @@
       }
     },
     mounted() {
+      this.$store.dispatch('setTypeOfUser', 'Driver') //Set User as Driver
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
       getStartPlace = null
       getEndPlace = null
@@ -112,23 +107,30 @@
 
       //Fired function to update driver location in the server every 10 seconds
       this.updateLocationOnServer()
-
+      
       //check request status before clearing the send driver location interval
-      setInterval(function () {
-        if (self.$store.state.stopDriverInterval) {
-          clearInterval(self.sendCurrentLocationInterval)
-          self.$store.dispatch('setDriverIntervalStatus', false)
-          self.getTrackingLocation()
-          self.getRoute()
-        }
-      }, 1000)
+      this.checkRequestBeforeClearing()
     },
     components: {
       Footer,
       SideNavigation,
-      DriverConfirmationDialogBox
+      DriverConfirmationDialogBox,
+      RideInfo
     },
     methods: {
+      checkRequestBeforeClearing() {
+        var self = this
+        //check request status before clearing the send driver location interval
+        var x = setInterval(function () {
+          if (self.$store.state.stopDriverInterval) {
+            clearInterval(self.sendCurrentLocationInterval)
+            clearInterval(x)
+            self.getTrackingLocation()
+            self.getRoute()
+            self.rideInfo = true
+          }
+        }, 1000)
+      },
       updateLocationOnServer() {
         var self = this
         //Get location of driver every 10 seconds

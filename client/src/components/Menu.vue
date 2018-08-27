@@ -1,7 +1,7 @@
 <template>
   <v-app>
-    <SideNavigation></SideNavigation>
-    <div>
+    <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
+    <div v-if="!$store.state.rideInfo">
       <div class="start-location">
         <v-icon color="blue" class="pl-2">map</v-icon>
         <input class="search-box" @click="autoComplete" id="pac-input" type="text" placeholder="Starting location">
@@ -13,11 +13,15 @@
       </div>
     </div>
     <div style="height:100%;width:100%" id="map"></div>
-    <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="findDriver">
+    <v-btn v-if="!$store.state.MenuConfirmation && !rideInfo" color="primary" @click="findDriver">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
+    </v-btn>
+    <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
+      <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
       :data='this.setPoints' :start='this.start' :end='this.end'></ConfirmationDialogBox>
+    <RideInfo v-if="$store.state.rideInfo"></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -32,7 +36,7 @@
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
-  import io from 'socket.io-client'
+  import RideInfo from './Reuse/InTransitStatusPage.vue'
   import LocationService from '@/services/LocationService'
 
   var getStartPlace
@@ -43,6 +47,7 @@
   export default {
     data() {
       return {
+        rideInfo: false,
         start: null,
         end: null,
         marker: null,
@@ -91,14 +96,18 @@
         console.log('Client Socket has been connected')
       },
       requestStatusToAll(data) {
-        //Clear driver from the marker array and maps to avoid messing the sync-data (driver no longer available)
-        for (var i = 0; this.setPoints[i] != undefined; ++i) {
-          if (data.driverId === this.setPoints[i].id) {
-            var removeThisMarkerFromMap = this.setPoints[i]
+        var self = this
+        setTimeout(() => {
+          //Clear driver from the marker array and maps to avoid messing the sync-data (driver no longer available)
+        for (var i = 0; self.setPoints[i] != undefined; ++i) {
+          if (data.driverId === self.setPoints[i].id) {
+            var removeThisMarkerFromMap = self.setPoints[i]
             removeThisMarkerFromMap.setMap(null) //Remove marker from maps
-            this.setPoints.splice(i, 1) //Remove marker from array
+            self.setPoints.splice(i, 1) //Remove marker from array
           }
         }
+        },1500)
+        
       },
       //Listen for event on any message from the server
       //request Status is triggered when driver accepts or declines the request
@@ -107,6 +116,7 @@
 
         //Delete the driver from the marker array since driver is no longer available
         if (data.message == 'Accepted') {
+          this.rideInfo = true //Show the ride info if driver accept the ride request
           clearInterval(this.driverLocationInterval) //Clear the interval so it stop showing other driver markers
           this.setPoints = [] //Clear all the available driver markers
         } else {
@@ -135,6 +145,8 @@
     },
 
     mounted() {
+      this.$store.dispatch('setTypeOfUser', 'Passenger') //Set User as Passenger
+
       var self = this
       console.log('Client socket has been connected Kappa', this.$socket.id)
       //Create the map
@@ -152,10 +164,14 @@
     components: {
       Footer,
       SideNavigation,
-      ConfirmationDialogBox
+      ConfirmationDialogBox,
+      RideInfo
     },
 
     methods: {
+      navigateTo(route) {
+        this.$router.push(route)
+      },
       startTheInterval() {
         var self = this
         //Get list of available driver locations every 10 seconds

@@ -68,8 +68,6 @@ import LocationService from '@/services/LocationService'
         this.$store.dispatch('setDriverMenuConfirmation', false)
       },
       acceptRequest() {
-        this.stopInterval = 
-        
         this.$socket.emit('requestStatusToAll', {
           driverId: this.$socket.id,
         })
