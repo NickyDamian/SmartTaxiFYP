@@ -10,7 +10,7 @@
     </v-btn>
     <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
       :passengerID='this.passengerID'></DriverConfirmationDialogBox>
-    <RideInfo v-if="$store.state.rideInfo"></RideInfo>
+    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID'></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -18,6 +18,26 @@
         Close
       </v-btn>
     </v-snackbar>
+    <v-dialog v-model="notifyPassengerDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Smart Taxi
+        </v-card-title>
+
+        <v-card-text>
+          {{this.passengerMessage}}
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="notifyPassengerDialog = false">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -27,8 +47,6 @@
   import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
   import RideInfo from './Reuse/InTransitStatusPage.vue'
   import LocationService from '@/services/LocationService'
-  var getStartPlace
-  var getEndPlace
   var lat1 = 3.0580092
   var lng1 = 101.7011474
   var point = {
@@ -39,6 +57,9 @@
   export default {
     data() {
       return {
+        notifyPassengerDialog: false,
+        passengerMessage: null,
+        watchID: null,
         rideInfo: false,
         start: null,
         end: null,
@@ -87,18 +108,26 @@
       },
       //Listen for event on any driver-location messagefrom the server
       sendRequest(data) {
-        console.log(data.startLocation, "Baby", data.endLocation)
         this.passengerID = data.passengerId
         this.start = data.startLocation
         this.end = data.endLocation
         this.$store.dispatch('setDriverMenuConfirmation', true)
+      },
+      canceledRequest(data) {
+        console.log(this.watchID , "Kappa 1")
+        this.passengerMessage = data.response
+        this.notifyPassengerDialog = data.message
+        this.rideInfo = false
+        navigator.geolocation.clearWatch(this.watchID);
+        console.log(this.watchID , "Kappa 2")
+        this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
+        //Start interval for getting driver location
+        this.updateLocationOnServer()
       }
     },
     mounted() {
       this.$store.dispatch('setTypeOfUser', 'Driver') //Set User as Driver
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
-      getStartPlace = null
-      getEndPlace = null
       var self = this
 
       //Check if socket connection has been made
@@ -107,9 +136,15 @@
 
       //Fired function to update driver location in the server every 10 seconds
       this.updateLocationOnServer()
-      
+
       //check request status before clearing the send driver location interval
       this.checkRequestBeforeClearing()
+
+      //Display route to the passenger destination once driver has arrive to the starting location
+      this.showRouteToTheDestination()
+
+      //Cancel the whole request if passenger does not show up.
+      this.driverCanceledRequest()
     },
     components: {
       Footer,
@@ -118,13 +153,43 @@
       RideInfo
     },
     methods: {
+      driverCanceledRequest() {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.cancelRequest) {
+            self.$store.dispatch('setCancelRequest', false) //Start interval function when driver accept request
+            navigator.geolocation.clearWatch(self.watchID); //stop watching driver location and stop sending to passenger
+            self.createGoogleMaps().then(self.initGoogleMaps, self.googleMapsFailedToLoad) //Clear map
+            self.updateLocationOnServer() //Save location in available driver server
+            self.rideInfo = false
+
+            self.$socket.emit('canceledRequest', {
+              message: true,
+              response: "Driver has canceled your request since you were unable to arrive to the starting location in time. Sorry for the inconvinience cause!",
+              id: self.passengerID
+            })
+          }
+        }, 1000)
+      },
+      showRouteToTheDestination() {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.displayRouteForJourney) {
+            self.$store.dispatch('setDisplayRouteForJourney', false) //Start interval function when driver accept request 
+            self.getRoute2()
+            self.getTrackingLocation("clear")
+          }
+        }, 1000)
+      },
       checkRequestBeforeClearing() {
         var self = this
         //check request status before clearing the send driver location interval
         var x = setInterval(function () {
           if (self.$store.state.stopDriverInterval) {
             clearInterval(self.sendCurrentLocationInterval)
-            clearInterval(x)
+            self.$store.dispatch('setDriverIntervalStatus', false) //Sets condition to false after setting the route to the passenger. Avoids running the function twice 
             self.getTrackingLocation()
             self.getRoute()
             self.rideInfo = true
@@ -133,6 +198,7 @@
       },
       updateLocationOnServer() {
         var self = this
+        navigator.geolocation.getCurrentPosition(success); //Fire function before 10sec interval
         //Get location of driver every 10 seconds
         this.sendCurrentLocationInterval = setInterval(function () {
           navigator.geolocation.getCurrentPosition(success);
@@ -172,40 +238,9 @@
       initGoogleMaps() {
         // You could do this as an easier alternative 
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
-        this.input = document.getElementById('pac-input');
-        this.input2 = document.getElementById('pac-input2');
-      },
-      autoComplete() {
-        var self = this;
-        this.autocomplete = new google.maps.places.Autocomplete(this.input, this.options);
-        this.autocomplete.addListener('place_changed', function () {
-          getStartPlace = null
-          getStartPlace = this.getPlace()
-          if (getStartPlace != null && getEndPlace != null) {
-            self.getRoute()
-          }
-        });
-      },
-      autoComplete2() {
-        var self = this;
-        this.autocomplete2 = new google.maps.places.Autocomplete(this.input2, this.options);
-        this.autocomplete2.addListener('place_changed', function () {
-          getEndPlace = null
-          getEndPlace = this.getPlace()
-          if (getStartPlace != null && getEndPlace != null) {
-            self.getRoute()
-          }
-        });
       },
       googleMapsFailedToLoad() {
         this.vueGMap = 'Error occurred';
-      },
-      findDriver() {
-        if (getStartPlace != null && getEndPlace != null) {
-          this.$store.dispatch('setMenuConfirmation', true)
-        } else {
-          this.snackbar = true
-        }
       },
       getRoute() {
         // console.log(point, '1 ', point.lat(), '2 ', point.lng())
@@ -232,11 +267,32 @@
           }
         })
       },
-      getTrackingLocation() {
-        console.log(point, '1 ')
-        console.log(this.start.geometry, '2 ')
-        // console.log(getStartPlace, '3 ')
-        var watchID;
+      getRoute2(start, end) {
+        // console.log(point, '1 ', point.lat(), '2 ', point.lng())
+        this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
+        this.directionsService = new google.maps.DirectionsService()
+        this.directionsDisplay = new google.maps.DirectionsRenderer()
+        this.directionsDisplay.setMap(this.vueGMap)
+        var vm = this
+        vm.directionsService.route({
+          origin: {
+            lat: this.start.geometry.location.lat,
+            lng: this.start.geometry.location.lng
+          },
+          destination: {
+            lat: this.end.geometry.location.lat,
+            lng: this.end.geometry.location.lng
+          },
+          travelMode: 'DRIVING'
+        }, function (response, status) {
+          if (status === 'OK') {
+            vm.directionsDisplay.setDirections(response)
+          } else {
+            console.log('Directions request failed due to ' + status)
+          }
+        })
+      },
+      getTrackingLocation(clear) {
         var geoLoc;
         var marker;
         var self = this;
@@ -245,7 +301,7 @@
           var loc = new google.maps.LatLng(position.coords.latitude,
             position.coords.longitude);
 
-          console.log(loc, "Kappa Prideeee");
+          console.log("Hapi Boi")
           self.$socket.emit('sendTheSelectedDriverLocation', {
             location: loc,
             passengerId: self.passengerID
@@ -274,12 +330,23 @@
             alert("Error: Position is unavailable!");
           }
         }
-
-        if (navigator.geolocation) {
-          geoLoc = navigator.geolocation;
-          watchID = geoLoc.watchPosition(showLocation, errorHandler);
+        if (clear === "clear") { //Clear marker then rewatch position to the passenger destination
+          navigator.geolocation.clearWatch(this.watchID);
+          if (navigator.geolocation) {
+            geoLoc = navigator.geolocation;
+            this.watchID = geoLoc.watchPosition(showLocation, errorHandler);
+            console.log(this.watchID, "Just for the lulz")
+          } else {
+            alert("Sorry, browser does not support geolocation!");
+          }
         } else {
-          alert("Sorry, browser does not support geolocation!");
+          if (navigator.geolocation) {
+            geoLoc = navigator.geolocation;
+            this.watchID = geoLoc.watchPosition(showLocation, errorHandler);
+            console.log(this.watchID, "Just for the lulz 2")
+          } else {
+            alert("Sorry, browser does not support geolocation!");
+          }
         }
       }
     }

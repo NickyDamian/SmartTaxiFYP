@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
-    <div v-if="!$store.state.rideInfo">
+    <div v-if="!$store.state.rideInfo && !rideInfo">
       <div class="start-location">
         <v-icon color="blue" class="pl-2">map</v-icon>
         <input class="search-box" @click="autoComplete" id="pac-input" type="text" placeholder="Starting location">
@@ -29,6 +29,26 @@
         Close
       </v-btn>
     </v-snackbar>
+    <v-dialog v-model="notifyPassengerDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Smart Taxi
+        </v-card-title>
+
+        <v-card-text>
+          {{this.driverArrivedMessage}}
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="notifyPassengerDialog = false, $store.dispatch('setRideInfo', false)">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
@@ -47,10 +67,13 @@
   export default {
     data() {
       return {
+        driverID: null,
+        driverArrivedMessage : null,
+        notifyPassengerDialog: false,
         rideInfo: false,
         start: null,
         end: null,
-        marker: null,
+        selectedDriverMarker: null,
         vueGMap: null,
         confirm: true,
         time: 45,
@@ -99,15 +122,15 @@
         var self = this
         setTimeout(() => {
           //Clear driver from the marker array and maps to avoid messing the sync-data (driver no longer available)
-        for (var i = 0; self.setPoints[i] != undefined; ++i) {
-          if (data.driverId === self.setPoints[i].id) {
-            var removeThisMarkerFromMap = self.setPoints[i]
-            removeThisMarkerFromMap.setMap(null) //Remove marker from maps
-            self.setPoints.splice(i, 1) //Remove marker from array
+          for (var i = 0; self.setPoints[i] != undefined; ++i) {
+            if (data.driverId === self.setPoints[i].id) {
+              var removeThisMarkerFromMap = self.setPoints[i]
+              removeThisMarkerFromMap.setMap(null) //Remove marker from maps
+              self.setPoints.splice(i, 1) //Remove marker from array
+            }
           }
-        }
-        },1500)
-        
+        }, 2000)
+
       },
       //Listen for event on any message from the server
       //request Status is triggered when driver accepts or declines the request
@@ -116,6 +139,7 @@
 
         //Delete the driver from the marker array since driver is no longer available
         if (data.message == 'Accepted') {
+          this.driverID = data.driverId
           this.rideInfo = true //Show the ride info if driver accept the ride request
           clearInterval(this.driverLocationInterval) //Clear the interval so it stop showing other driver markers
           this.setPoints = [] //Clear all the available driver markers
@@ -129,18 +153,37 @@
       //Watch the location of the driver once request has been accepted
       sendTheSelectedDriverLocation(data) {
         var self = this
-        if (this.marker) {
+        if (this.selectedDriverMarker) {
           // Marker already created - Move it
-          this.marker.setPosition(data.location);
+          this.selectedDriverMarker.setPosition(data.location);
 
         } else {
           // Marker does not exist - Create it
-          this.marker = new google.maps.Marker({
+          this.selectedDriverMarker = new google.maps.Marker({
             position: data.location,
             map: self.vueGMap,
             icon: 'https://cdn.discordapp.com/attachments/261814160344481792/478169653538193408/Driver.png'
           });
         }
+      },
+      //Notify the passenger that the driver has reached the starting location
+      notifyDriverHasReached(data) {
+        this.driverArrivedMessage = data.response
+        this.notifyPassengerDialog = data.message
+      },
+      theJourneyHasBegun(data) {
+        this.$store.dispatch('setDisplayJourneyCompletedForPassenger', true) //Passenger cannot cancel booking once in the driver's car
+      },
+      canceledRequest(data) {
+        this.driverArrivedMessage = data.response
+        this.notifyPassengerDialog = data.message
+        this.selectedDriverMarker = null
+        getStartPlace = null
+        getEndPlace = null
+        this.rideInfo = false
+        this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
+        //Start interval for getting driver location
+        this.startTheInterval()
       }
     },
 
@@ -159,6 +202,9 @@
       //Start interval for getting driver location
       this.startTheInterval()
 
+      //When passenger cancel request
+      this.passengerCanceledRequest()
+
     },
 
     components: {
@@ -169,11 +215,35 @@
     },
 
     methods: {
+      passengerCanceledRequest() {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.cancelRequest) {
+            getStartPlace = null
+            getEndPlace = null
+            console.log(getStartPlace, getEndPlace, "Don was here")
+            self.selectedDriverMarker.setMap(null); //stop watching driver location and stop sending to passenger
+            self.selectedDriverMarker = null
+            self.createGoogleMaps().then(self.initGoogleMaps, self.googleMapsFailedToLoad) //Clear map
+            self.startTheInterval() //Start getting available drivers from the server
+            self.rideInfo = false
+
+            self.$socket.emit('canceledRequest', {
+              message: true,
+              response: "Passenger has unfortunately canceled the request. Sorry for the inconvenience cause.",
+              id: self.driverID
+            })
+            self.$store.dispatch('setCancelRequest', false) //Start interval function when driver accept request
+          }
+        }, 1000)
+      },
       navigateTo(route) {
         this.$router.push(route)
       },
       startTheInterval() {
         var self = this
+        self.getLocations()
         //Get list of available driver locations every 10 seconds
         this.driverLocationInterval = setInterval(function () {
           self.getLocations()

@@ -42,11 +42,26 @@ io.on('connection', function(socket) { //Each client will have their own socket
 
     //Send request status back to passenger if driver accepted or declined
     socket.on('requestStatus', function(data){
-        io.to(data.passengerId).emit('requestStatus',data) //sending the request status back to the passenger that requested for a ride
+        io.to(data.passengerId).emit('requestStatus',data)
     })
 
     //Send location of selected driver and watch his position
     socket.on('sendTheSelectedDriverLocation', function(data){
         io.to(data.passengerId).emit('sendTheSelectedDriverLocation',data)
+    })
+
+    //Notify passenger that driver has reached
+    socket.on('notifyDriverHasReached', function(data){
+        io.to(data.passengerId).emit('notifyDriverHasReached',data)
+    })
+
+    //Notify passenger/driver that request has been canceled
+    socket.on('canceledRequest', function(data){
+        io.to(data.id).emit('canceledRequest',data)
+    })
+
+    //Passenger cannot cancel the booking once passenger in the driver's car
+    socket.on('theJourneyHasBegun', function(data){
+        io.to(data.passengerId).emit('theJourneyHasBegun',data)
     })
 });

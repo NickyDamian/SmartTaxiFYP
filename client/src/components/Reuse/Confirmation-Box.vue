@@ -75,8 +75,6 @@
     ],
     mounted() {
       // console.log(this.data[0][1])
-      console.log(this.start)
-      console.log(this.end)
     },
     methods: {
       confirmationBoxDisplay() {

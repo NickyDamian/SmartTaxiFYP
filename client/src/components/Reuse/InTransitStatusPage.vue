@@ -1,5 +1,5 @@
 <template>
-  <div class="rideInfoComponent">
+  <div>
     <v-toolbar dark color="primary">
       <v-btn icon dark @click="$store.dispatch('setRideInfo', false)">
         <v-icon>close</v-icon>
@@ -60,16 +60,16 @@
       </v-flex>
     </v-card>
     <v-card color="primary">
-      <v-btn v-if='$store.state.typeOfUser == "Passenger"' flat large dark block @click="dialog = true">
+      <v-btn v-if='$store.state.typeOfUser == "Passenger" && !$store.state.displayJourneyCompletedForPassenger' flat large dark block @click="dialog = true">
         <v-icon class="pr-2">not_interested</v-icon> Cancel Request
       </v-btn>
-      <v-btn v-if='$store.state.typeOfUser == "Driver" && driverReached' flat large dark block @click="notifyPassengerDialog=true, driverReached = false, beginJourney = true ">
+      <v-btn v-if='$store.state.typeOfUser == "Driver" && driverReached' flat large dark block @click="driverHasReached(), notifyPassengerDialog=true, driverReached = false, beginJourney = true">
         <v-icon class="pr-2">directions_car</v-icon> Driver Has Reached
       </v-btn>
-      <v-btn v-if='$store.state.typeOfUser == "Driver" && beginJourney' flat large dark block @click="beginJourney = false, completeJourney = true">
+      <v-btn v-if='$store.state.typeOfUser == "Driver" && beginJourney' flat large dark block @click="beginJourney = false, completeJourney = true, $store.dispatch('setRideInfo', false), beginTheJourney()">
         <v-icon class="pr-2">beenhere</v-icon> Begin Journey
       </v-btn>
-      <v-btn v-if='$store.state.typeOfUser == "Driver" && completeJourney' flat large dark block>
+      <v-btn v-if='completeJourney || $store.state.displayJourneyCompletedForPassenger' flat large dark block @click="completeJourney = false, driverReached = true">
         <v-icon class="pr-2">beenhere</v-icon> Journey Completed
       </v-btn>
     </v-card>
@@ -88,28 +88,52 @@
             Lulz Joke
           </v-btn>
 
-          <v-btn color="green darken-1" flat="flat" @click="dialog = false">
+          <v-btn color="green darken-1" flat="flat" @click="dialog = false, cancelBooking(), $store.dispatch('setRideInfo', false)">
             I'm Sure
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="notifyPassengerDialog" width="500">
+    <v-dialog v-model="notifyPassengerDialog" width="500" persistent>
       <v-card>
         <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
           Notifying Passenger
         </v-card-title>
 
         <v-card-text>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          We will notify your passenger that you have safely arrived to the starting location!
         </v-card-text>
 
         <v-divider></v-divider>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="notifyPassengerDialog = false">
-            I accept
+          <v-btn color="primary" flat @click="notifyPassengerDialog = false, $store.dispatch('setRideInfo', false)">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="cancelPassengerRequest" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Passenger hasn`t arrive?
+        </v-card-title>
+
+        <v-card-text>
+          It seems that your passenger still hasn`t arrive. Would you like to wait for another 3 mins or cancel the request.
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest('Wait')">
+            Wait
+          </v-btn>
+
+          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest(), driverReached= true, beginJourney= false">
+            Cancel Request
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -124,13 +148,67 @@
         dialog: false,
         driverReached: true,
         notifyPassengerDialog: false,
+        cancelPassengerRequest: false,
         beginJourney: false,
-        completeJourney: false
+        completeJourney: false,
+        theIntervalWhenDriverArrives: null
       }
     },
+    sockets: {
+      canceledRequest(data) {
+        this.driverReached= true
+        this.beginJourney= false
+      }
+    },
+    props: [
+      'passengerID',
+      'driverID'
+    ],
     methods: {
+      driverNoticeInterval () {
+        var self = this
+        this.theIntervalWhenDriverArrives = setInterval(() => {
+          console.log(self.theIntervalWhenDriverArrives, "Kappa Pride Don")
+          self.cancelPassengerRequest = true
+        }, 20000)
+      },
+      driverHasReached() {
+        var self = this
+        this.$socket.emit('notifyDriverHasReached', {
+          message: true,
+          response: "Driver has arrived to your location. Driver will wait up to 3 mins for your arrival. Thank you!",
+          passengerId: this.passengerID
+        })
+        this.driverNoticeInterval()
+      },
+      resendDriverHasReachedRequest(message) {
+        if (message === 'Wait') {
+          this.$socket.emit('notifyDriverHasReached', {
+            message: true,
+            response: "This is a reminder notice. Please note that the driver has agreed to wait another 3 mins! Please hurry! Thank you!",
+            passengerId: this.passengerID
+          })
+        }
+        else {
+          clearInterval(this.theIntervalWhenDriverArrives)
+          this.$store.dispatch('setCancelRequest', true)
+        }
+      },
+      beginTheJourney() {
+        this.$store.dispatch('setDisplayJourneyCompletedForPassenger', true) //Passenger cannot cancel booking once in the driver's car
+        clearInterval(this.theIntervalWhenDriverArrives)
+        this.$store.dispatch('setDisplayRouteForJourney', true)
+        this.$socket.emit('theJourneyHasBegun', {
+            message: true,
+            passengerId: this.passengerID
+        })
+      },
+      cancelBooking() {
+        this.$store.dispatch('setCancelRequest', true)
       }
     }
+  }
+
 </script>
 
 
@@ -140,27 +218,33 @@
     font-size: 16px;
     font-weight: 400;
   }
+
   .address-section {
     margin-left: -120px !important;
     font-weight: 600;
     font-size: 18px;
   }
+
   .address {
     font-weight: 400;
     font-size: 15px;
     text-align: justify !important;
     padding: 0 52px;
   }
+
   .money {
     font-weight: 600;
     font-size: 18px;
   }
+
   .commentArea {
     font-weight: 400;
     font-size: 15px;
     text-align: left !important;
   }
+
   .commentSection {
     margin-bottom: -20px
   }
+
 </style>
