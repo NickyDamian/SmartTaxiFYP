@@ -13,10 +13,10 @@
           <v-btn color="grey lighten-5">
             <v-icon>credit_card</v-icon>
           </v-btn>
-          <v-btn color="grey lighten-5" class="option-button">
-            <v-icon>linear_scale</v-icon>
+          <v-btn color="grey lighten-5" class="option-button" @click="commentDialog = true">
+            <v-icon>add_circle_outline</v-icon>
           </v-btn>
-          <v-btn dark color="secondary" @click.native="confirmationBoxDisplay, show=true, setProgress();">Book</v-btn>
+          <v-btn dark color="secondary" @click.native="confirmationBoxDisplay, show=true, setProgress()">Book</v-btn>
         </v-flex>
         <v-flex class="pt-2 pb-2 time-label">
           <label>Time Estimation</label>
@@ -44,6 +44,30 @@
           </v-progress-circular>
         </v-flex>
       </v-card>
+      <v-dialog v-model="commentDialog" width="500" persistent ref="commentDialog">
+        <v-card>
+          <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+            Smart Taxi
+          </v-card-title>
+
+          <v-card-actions class="comment-section">
+            <v-textarea :rules="rules.commentRules" outline rows="3" solo label="Note to driver..." v-model="comment"></v-textarea>
+          </v-card-actions>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="green darken-1" flat="flat" @click="commentDialog = false, comment=''">
+              Cancel
+            </v-btn>
+
+            <v-btn color="green darken-1" flat="flat" @click="commentDialog = false, passengerComment()">
+              Confirm
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </div>
 </template>
@@ -52,7 +76,8 @@
   export default {
     data() {
       return {
-        dialog: true,
+        comment: '',
+        commentDialog: false,
         notifications: false,
         sound: true,
         widgets: false,
@@ -62,7 +87,12 @@
         dataOnDriverLocations: this.data,
         radiusOfDriverDistance: [],
         startLocation: this.start,
-        endLocation: this.end
+        endLocation: this.end,
+        rules: {
+          commentRules: [
+            (v) => v.length <= 120 || 'Please ensure it is not more than 120 characters'
+          ]
+        }
       }
     },
     props: [
@@ -74,9 +104,17 @@
       'end'
     ],
     mounted() {
-      // console.log(this.data[0][1])
+      this.$store.dispatch('setCommentForPassenger', null)
     },
     methods: {
+      passengerComment() {
+        this.$store.dispatch('setCommentForPassenger', this.comment)
+      },
+      submit() {
+        if (this.$refs.commentDialog.validate()) {
+          this.commentDialog = false
+        }
+      },
       confirmationBoxDisplay() {
         this.$store.dispatch('setMenuConfirmation', false)
       },
@@ -91,33 +129,32 @@
             return (this.value = 0);
           }
           this.value += 10
-        }, 1000)
+        }, 500)
       },
       findDriverWithShortestDistance() {
         var minimum = 1000 //Base number as 1000 since radius won't cover pass that (Not suitable for real production)
         var shortestDistanceDriver
         var self = this
         //Iterate through each array ITEM in the array
-        for(var i=0; i<this.radiusOfDriverDistance.length; ++i){
+        for (var i = 0; i < this.radiusOfDriverDistance.length; ++i) {
           //Iterate through each item in the sub-array
-          for(var j=0; j<this.radiusOfDriverDistance[i].length; ++j){
+          for (var j = 0; j < this.radiusOfDriverDistance[i].length; ++j) {
             //Compare the radius. If smaller, save as the new minimum
             minimum = Math.min(minimum, this.radiusOfDriverDistance[i][0])
             //Save the driver object with the shortest radius distance
-            if(minimum == this.radiusOfDriverDistance[i][0]){
+            if (minimum == this.radiusOfDriverDistance[i][0]) {
               shortestDistanceDriver = this.radiusOfDriverDistance[i]
             }
           }
         }
-        console.log(minimum, shortestDistanceDriver[1])
-        console.log('Client socket has been connected Kappa',this.$socket.id)
+        console.log(minimum, shortestDistanceDriver[1])      
         //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
-        console.log(this.startLocation, "Baby", this.endLocation)
         this.$socket.emit('sendRequest', {
           driverId: shortestDistanceDriver[1],
           passengerId: this.$socket.id,
           startLocation: this.startLocation,
-          endLocation: this.endLocation
+          endLocation: this.endLocation,
+          comment: this.comment
         })
       },
       compareDistance(currentUserPos) {
@@ -142,8 +179,6 @@
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
-
-          console.log(position.coords.latitude, position.coords.longitude, "Kappa Pride Baby");
           self.compareDistance(currentUserPos);
         });
       }
@@ -197,6 +232,11 @@
 
   .v-progress-circular {
     margin: 1rem
+  }
+
+  .comment-section {
+    padding-top: 18px;
+    margin-bottom: -10px
   }
 
 </style>

@@ -10,7 +10,7 @@
     </v-btn>
     <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
       :passengerID='this.passengerID'></DriverConfirmationDialogBox>
-    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID'></RideInfo>
+    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :comment='this.comment'></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -32,7 +32,7 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="notifyPassengerDialog = false">
+          <v-btn color="primary" flat @click="notifyPassengerDialog = false, $store.dispatch('setRideInfo', false)">
             Okay
           </v-btn>
         </v-card-actions>
@@ -57,6 +57,7 @@
   export default {
     data() {
       return {
+        comment: '',
         notifyPassengerDialog: false,
         passengerMessage: null,
         watchID: null,
@@ -111,15 +112,14 @@
         this.passengerID = data.passengerId
         this.start = data.startLocation
         this.end = data.endLocation
+        this.comment = data.comment
         this.$store.dispatch('setDriverMenuConfirmation', true)
       },
       canceledRequest(data) {
-        console.log(this.watchID , "Kappa 1")
         this.passengerMessage = data.response
         this.notifyPassengerDialog = data.message
         this.rideInfo = false
         navigator.geolocation.clearWatch(this.watchID);
-        console.log(this.watchID , "Kappa 2")
         this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
         //Start interval for getting driver location
         this.updateLocationOnServer()

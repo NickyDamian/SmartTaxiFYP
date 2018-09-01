@@ -51,8 +51,11 @@
       <v-flex class="pb-3 address">
         <label>Rumah Donny Boy</label>
       </v-flex>
-      <v-flex class="commentSection">
-        <v-textarea outline class="pl-3 pr-3" rows="3" solo label="Outline textarea" readonly value="At the front entrance with a loser kid named Kelf"></v-textarea>
+      <v-flex v-if='$store.state.typeOfUser == "Driver"' class="commentSection">
+        <v-textarea outline class="pl-3 pr-3" rows="3" solo label="No comments to show..." readonly v-model='this.comment'></v-textarea>
+      </v-flex>
+      <v-flex v-if='$store.state.typeOfUser == "Passenger"' class="commentSection">
+        <v-textarea outline class="pl-3 pr-3" rows="3" solo label="No comments to show..." readonly v-model='$store.state.commentForPassenger'></v-textarea>
       </v-flex>
       <v-flex class="pb-2">
         <v-icon color="primary">attach_money</v-icon>
@@ -132,7 +135,7 @@
             Wait
           </v-btn>
 
-          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest(), driverReached= true, beginJourney= false">
+          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest(), driverReached= true, beginJourney= false, $store.dispatch('setRideInfo', false)">
             Cancel Request
           </v-btn>
         </v-card-actions>
@@ -162,7 +165,8 @@
     },
     props: [
       'passengerID',
-      'driverID'
+      'driverID',
+      'comment'
     ],
     methods: {
       driverNoticeInterval () {
@@ -195,7 +199,6 @@
         }
       },
       beginTheJourney() {
-        this.$store.dispatch('setDisplayJourneyCompletedForPassenger', true) //Passenger cannot cancel booking once in the driver's car
         clearInterval(this.theIntervalWhenDriverArrives)
         this.$store.dispatch('setDisplayRouteForJourney', true)
         this.$socket.emit('theJourneyHasBegun', {

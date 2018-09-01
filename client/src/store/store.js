@@ -15,7 +15,8 @@ export default new Vuex.Store({
         rideInfo: false, //Display the ride info if user wants to know information about the driver/passenger
         displayRouteForJourney: false, //Display journey route once driver has reached the start location
         cancelRequest: false, //Driver has cancel the request since passenger hasn`t show up
-        displayJourneyCompletedForPassenger: false
+        displayJourneyCompletedForPassenger: false, //Allow passenger to provide their feeback once journey has been completed
+        commentForPassenger: null
     }, //keeping track of changes
 
     mutations: {
@@ -48,6 +49,9 @@ export default new Vuex.Store({
         },
         setDisplayJourneyCompletedForPassenger (state, displayJourneyCompletedForPassenger){
             state.displayJourneyCompletedForPassenger = displayJourneyCompletedForPassenger
+        },
+        setCommentForPassenger (state, commentForPassenger){
+            state.commentForPassenger = commentForPassenger
         }
     },
     actions: {
@@ -80,6 +84,9 @@ export default new Vuex.Store({
         },
         setDisplayJourneyCompletedForPassenger ({commit}, displayJourneyCompletedForPassenger) {
             commit('setDisplayJourneyCompletedForPassenger', displayJourneyCompletedForPassenger)
+        },
+        setCommentForPassenger ({commit}, commentForPassenger) {
+            commit('setCommentForPassenger', commentForPassenger)
         }
     }
 })
