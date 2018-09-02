@@ -205,6 +205,9 @@
       //When passenger cancel request
       this.passengerCanceledRequest()
 
+      //Journey Completed
+      this.journeyIsCompleted()
+
     },
 
     components: {
@@ -215,6 +218,22 @@
     },
 
     methods: {
+      journeyIsCompleted() {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.journeyCompleted) {
+            getStartPlace = null
+            getEndPlace = null
+            self.selectedDriverMarker.setMap(null); //stop watching driver location and stop sending to passenger
+            self.selectedDriverMarker = null
+            self.$store.dispatch('setJourneyCompleted', false) //Start interval function when driver accept request
+            self.createGoogleMaps().then(self.initGoogleMaps, self.googleMapsFailedToLoad) //Clear map
+            self.startTheInterval() //Save location in available driver server
+            self.rideInfo = false
+          }
+        }, 1000)
+      },
       passengerCanceledRequest() {
         var self = this
         //Display route to the destination once driver has arrived!
@@ -222,7 +241,6 @@
           if (self.$store.state.cancelRequest) {
             getStartPlace = null
             getEndPlace = null
-            console.log(getStartPlace, getEndPlace, "Don was here")
             self.selectedDriverMarker.setMap(null); //stop watching driver location and stop sending to passenger
             self.selectedDriverMarker = null
             self.createGoogleMaps().then(self.initGoogleMaps, self.googleMapsFailedToLoad) //Clear map

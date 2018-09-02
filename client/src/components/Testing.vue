@@ -145,6 +145,9 @@
 
       //Cancel the whole request if passenger does not show up.
       this.driverCanceledRequest()
+
+      //Journey Completed
+      this.journeyIsCompleted()
     },
     components: {
       Footer,
@@ -153,6 +156,19 @@
       RideInfo
     },
     methods: {
+      journeyIsCompleted() {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.journeyCompleted) {
+            self.$store.dispatch('setJourneyCompleted', false) //Start interval function when driver accept request
+            navigator.geolocation.clearWatch(self.watchID); //stop watching driver location and stop sending to passenger
+            self.createGoogleMaps().then(self.initGoogleMaps, self.googleMapsFailedToLoad) //Clear map
+            self.updateLocationOnServer() //Save location in available driver server
+            self.rideInfo = false
+          }
+        }, 1000)
+      },
       driverCanceledRequest() {
         var self = this
         //Display route to the destination once driver has arrived!

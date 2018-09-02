@@ -1,6 +1,6 @@
 const AuthenticationController = require('./controllers/AuthenticationController')
 const AuthenticationControllerPolicy = require('./policies/AuthenticationControllerPolicy')
-
+const DriverFeedbackController = require('./controllers/DriverFeedbackController')
 const DriverLocationController = require('./controllers/LocationController')
 
 module.exports = (app) => {
@@ -19,4 +19,10 @@ module.exports = (app) => {
     
     app.post('/deletelocation', //middleway function to delete driver location 
         DriverLocationController.deleteLocation)
+
+    app.post('/saveDriverFeedback', //middleway function to save driver's feedback on passengers
+        DriverFeedbackController.saveDriverFeedback)
+
+    app.post('/getDriverFeedbacks', //middleway function to save driver's feedback on passengers
+        DriverFeedbackController.getDriverFeedbacks)
 }
