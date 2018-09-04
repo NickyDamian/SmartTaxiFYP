@@ -73,7 +73,7 @@
       <v-btn v-if='$store.state.typeOfUser == "Driver" && beginJourney' flat large dark block @click="beginJourney = false, completeJourney = true, $store.dispatch('setRideInfo', false), beginTheJourney()">
         <v-icon class="pr-2">beenhere</v-icon> Begin Journey
       </v-btn>
-      <v-btn v-if='completeJourney || $store.state.displayJourneyCompletedForPassenger' flat large dark block @click="completeJourney = false, driverReached = true, feedbackDialog=true">
+      <v-btn v-if='completeJourney || $store.state.displayJourneyCompletedForPassenger' flat large dark block @click="completeJourney = false, driverReached = true, checkIfJourneyCompleted()">
         <v-icon class="pr-2">beenhere</v-icon> Journey Completed
       </v-btn>
     </v-card>
@@ -158,14 +158,35 @@
           full-increments></v-rating>
 
         <v-card-actions>
-            <v-textarea  outline rows="3" solo label="Additional comments..." v-model="feedback"></v-textarea>
+          <v-textarea outline rows="3" solo label="Additional comments..." v-model="feedback"></v-textarea>
         </v-card-actions>
         <v-divider></v-divider>
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), $store.dispatch('setRideInfo', false)">
             Submit
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="rideActuallyCompletedDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Please wait!
+        </v-card-title>
+
+        <v-card-text>
+          It seems that your journey is still in progress. Please wait until the driver has reached your destination
+          before ending the request!
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="rideActuallyCompletedDialog = false">
+            Okay
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -174,9 +195,12 @@
 </template>
 
 <script>
+  import FeedbackService from '@/services/FeedbackService'
   export default {
     data() {
       return {
+        rideActuallyCompletedDialog: false,
+        rideComplete: this.rideActuallyCompleted,
         rating: 5,
         feedback: '',
         dialog: false,
@@ -193,14 +217,50 @@
       canceledRequest(data) {
         this.driverReached = true
         this.beginJourney = false
+      },
+      rideActuallyCompleted(data) {
+        this.rideComplete = data.message
+      },
+      canceledRequest(data) {
+        clearInterval(this.theIntervalWhenDriverArrives)
       }
     },
     props: [
       'passengerID',
       'driverID',
-      'comment'
+      'comment',
+      'rideActuallyCompleted'
     ],
     methods: {
+      async submitFeedback() {
+        if (this.$store.state.typeOfUser == 'Passenger') {
+          try {
+            const response = await FeedbackService.savePassengerFeedback({
+              driverID: "nickydamian25@gmail.com",
+              feedbacks: [{
+                rating: this.rating,
+                comment: this.feedback
+              }]
+            })
+          } catch (error) {
+            this.error = error.response.data.error
+          }
+        } else {
+          try {
+            const response = await FeedbackService.saveDriverFeedback({
+              passengerID: "nickydamian25@gmail.com",
+              feedbacks: [{
+                rating: this.rating,
+                comment: this.feedback
+              }]
+            })
+          } catch (error) {
+            this.error = error.response.data.error
+          }
+        }
+        this.rating = 5
+        this.feedback = ''
+      },
       driverNoticeInterval() {
         var self = this
         this.theIntervalWhenDriverArrives = setInterval(() => {
@@ -240,8 +300,21 @@
       cancelBooking() {
         this.$store.dispatch('setCancelRequest', true)
       },
+      checkIfJourneyCompleted() {
+        if (this.$store.state.typeOfUser === 'Passenger' && !this.rideComplete) {
+          this.rideActuallyCompletedDialog = true
+        } else {
+          this.feedbackDialog = true
+        }
+      },
       journeyCompleted() {
-        console.log("Journey Completed")
+        this.rideComplete = false
+        this.$socket.emit('rideActuallyCompleted', {
+          message: true,
+          passengerId: this.passengerID
+        })
+        console.log(this.passengerID)
+        this.$store.dispatch('setDisplayJourneyCompletedForPassenger', false)
         this.$store.dispatch('setJourneyCompleted', true)
       }
     }

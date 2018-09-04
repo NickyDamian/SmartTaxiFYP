@@ -21,7 +21,7 @@
     </v-btn>
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
       :data='this.setPoints' :start='this.start' :end='this.end'></ConfirmationDialogBox>
-    <RideInfo v-if="$store.state.rideInfo"></RideInfo>
+    <RideInfo v-if="$store.state.rideInfo" :driverID='this.driverID' :rideActuallyCompleted='this.rideActuallyCompleted'></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
       :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -67,6 +67,7 @@
   export default {
     data() {
       return {
+        rideActuallyCompleted: false,
         driverID: null,
         driverArrivedMessage : null,
         notifyPassengerDialog: false,
@@ -118,6 +119,9 @@
       connect() {
         console.log('Client Socket has been connected')
       },
+      rideActuallyCompleted(data) { //Let passenger rate the driver once journey is completed
+        this.rideActuallyCompleted = data.message
+      },
       requestStatusToAll(data) {
         var self = this
         setTimeout(() => {
@@ -141,9 +145,9 @@
         if (data.message == 'Accepted') {
           this.driverID = data.driverId
           this.rideInfo = true //Show the ride info if driver accept the ride request
-          clearInterval(this.driverLocationInterval) //Clear the interval so it stop showing other driver markers
           this.setPoints = [] //Clear all the available driver markers
         } else {
+          this.startTheInterval() //Start the interval
           this.snackbar = true
           this.text = 'Driver Unavailable. Please try again!'
         }
@@ -202,6 +206,9 @@
       //Start interval for getting driver location
       this.startTheInterval()
 
+      //Stop the interval whenever a ride request is sent to the driver
+      this.stopTheInterval()
+
       //When passenger cancel request
       this.passengerCanceledRequest()
 
@@ -218,11 +225,22 @@
     },
 
     methods: {
+      stopTheInterval () {
+        var self = this
+        //Display route to the destination once driver has arrived!
+        var x = setInterval(function () {
+          if (self.$store.state.stopThePassengerInterval) {
+            clearInterval(self.driverLocationInterval) //Clear the interval so it stop showing other driver markers
+            self.$store.dispatch('setStopThePassengerInterval', false)
+          }
+        }, 1000)
+      },
       journeyIsCompleted() {
         var self = this
         //Display route to the destination once driver has arrived!
         var x = setInterval(function () {
           if (self.$store.state.journeyCompleted) {
+            self.rideActuallyCompleted = false
             getStartPlace = null
             getEndPlace = null
             self.selectedDriverMarker.setMap(null); //stop watching driver location and stop sending to passenger

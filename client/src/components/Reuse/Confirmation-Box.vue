@@ -129,7 +129,7 @@
             return (this.value = 0);
           }
           this.value += 10
-        }, 500)
+        }, 1000)
       },
       findDriverWithShortestDistance() {
         var minimum = 1000 //Base number as 1000 since radius won't cover pass that (Not suitable for real production)
@@ -172,6 +172,7 @@
         this.findDriverWithShortestDistance()
       },
       getCurrentPosition() {
+        this.$store.dispatch('setStopThePassengerInterval', true)
         var self = this
         //Get user's current postition
         navigator.geolocation.getCurrentPosition(function (position) {

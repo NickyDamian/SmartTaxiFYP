@@ -13,7 +13,7 @@
           <v-btn color="grey lighten-5">
             <v-icon>credit_card</v-icon>
           </v-btn>
-          <v-btn color="grey lighten-5" class="option-button">
+          <v-btn color="grey lighten-5" class="option-button" @click.native="passengerBadRequestDialog = true">
             <v-icon>linear_scale</v-icon>
           </v-btn>
           <v-btn dark color="secondary" @click.native="confirmationBoxDisplay(), show=true, acceptRequest()">Accept</v-btn>
@@ -37,6 +37,34 @@
           <label class="money">MYR {{money}}</label>
         </v-flex>
       </v-card>
+      <v-dialog v-model="passengerBadRequestDialog" fullscreen persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Bad Requests?
+        </v-card-title>
+
+        <v-list two-line>
+          <template v-for="(item, index) in items">
+            <v-list-tile :key="index" avatar>
+              <v-list-tile-content>
+                <v-list-tile-title>{{ item.title }}</v-list-tile-title>
+                <v-list-tile-sub-title>{{ item.subtitle }}</v-list-tile-sub-title>
+              </v-list-tile-content>
+            </v-list-tile>
+            <v-divider v-if="index + 1 < items.length" :key="`divider-${index}`"></v-divider>
+          </template>
+        </v-list>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="passengerBadRequestDialog = false">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     </div>
   </div>
 </template>
@@ -46,6 +74,14 @@ import LocationService from '@/services/LocationService'
   export default {
     data() {
       return {
+        items: [
+          { title: 'Ali Connors', subtitle: "I'll be in your neighborhood doing errands this weekend. Do you want to hang out?" },
+          { title: 'Scrott', subtitle: "Wish I could come, but I'm out of town this weekend." },
+          { title: 'Sandra Adams', subtitle: 'Do you have Paris recommendations? Have you ever been?' },
+          { title: 'Trevor Hansen', subtitle: 'Have any ideas about what we should get Heidi for her birthday?' },
+          { title: 'Britta Holt', subtitle: 'We should eat this: Grate, Squash, Corn, and tomatillo Tacos.' }
+        ],
+        passengerBadRequestDialog: false,
         dialog: true,
         notifications: false,
         sound: true,

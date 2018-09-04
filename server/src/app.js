@@ -64,4 +64,9 @@ io.on('connection', function(socket) { //Each client will have their own socket
     socket.on('theJourneyHasBegun', function(data){
         io.to(data.passengerId).emit('theJourneyHasBegun',data)
     })
+
+    //Passenger cannot click completed journey button unless the driver has reached the destination
+    socket.on('rideActuallyCompleted', function(data){
+        io.to(data.passengerId).emit('rideActuallyCompleted',data)
+    })
 });

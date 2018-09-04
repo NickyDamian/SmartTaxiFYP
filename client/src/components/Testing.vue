@@ -218,7 +218,7 @@
         //Get location of driver every 10 seconds
         this.sendCurrentLocationInterval = setInterval(function () {
           navigator.geolocation.getCurrentPosition(success);
-          console.log("Fucktion fired!");
+          console.log("Function fired!");
         }, 10000)
 
         function success(position) {
@@ -351,7 +351,6 @@
           if (navigator.geolocation) {
             geoLoc = navigator.geolocation;
             this.watchID = geoLoc.watchPosition(showLocation, errorHandler);
-            console.log(this.watchID, "Just for the lulz")
           } else {
             alert("Sorry, browser does not support geolocation!");
           }
@@ -359,7 +358,6 @@
           if (navigator.geolocation) {
             geoLoc = navigator.geolocation;
             this.watchID = geoLoc.watchPosition(showLocation, errorHandler);
-            console.log(this.watchID, "Just for the lulz 2")
           } else {
             alert("Sorry, browser does not support geolocation!");
           }

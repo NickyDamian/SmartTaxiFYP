@@ -1,14 +1,14 @@
-const DriverFeedback = require('../models/DriverFeedback');
+const PassengerFeedback = require('../models/PassengerFeedback');
 
-module.exports = {
-    async saveDriverFeedback(req, res) {
-        const {passengerID} = req.body
-        const review = await DriverFeedback.findOne({
-            passengerID: passengerID
+module.exports = { 
+    async savePassengerFeedback(req, res) {
+        const {driverID} = req.body
+        const review = await PassengerFeedback.findOne({
+            driverID: driverID
         })
-        //Check if passenger had a feedback before. If not then create new driver item
+        //Check if driver had a feedback before. If not then create new passenger item
         if (!review) {
-            DriverFeedback.create(req.body).then(function (comments) {
+            PassengerFeedback.create(req.body).then(function (comments) {
                 res.send({
                     saved: comments,
                     message: `Successfully saved driver's feedback on passenger`,
@@ -22,17 +22,17 @@ module.exports = {
                 console.log(next)
             }); //send back the object to client that res for the endpoint
         }
-        //If passenger feedback exist, find the corrent driver and update its location
+        //If driver feedback exist, find the corrent passenger and update its location
         else {
             try {
-                const driverFeedback = await DriverFeedback.update({
-                    'passengerID': passengerID
+                const passengerFeedback = await PassengerFeedback.update({
+                    'driverID': driverID
                 }, {
                     $push: {
                         'feedbacks': req.body.feedbacks
                     }
                 })
-                res.send(driverFeedback)
+                res.send(passengerFeedback)
             } catch (err) {
                 console.log(err)
                 res.status(500).send({
@@ -41,10 +41,10 @@ module.exports = {
             }
         }
     },
-    async getDriverFeedbacks(req,res) {
+    async getPassengerFeedbacks(req,res) {
         try {
-            const feedback = await DriverFeedback.findOne({
-                passengerID: req.body.passengerID
+            const feedback = await PassengerFeedback.findOne({
+                driverID: req.body.driverID
             })
             if(feedback) {
                 res.send({
@@ -65,5 +65,5 @@ module.exports = {
                 condition: false
             })
         }
-    },
+    }
 }

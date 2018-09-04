@@ -1,6 +1,8 @@
 const AuthenticationController = require('./controllers/AuthenticationController')
 const AuthenticationControllerPolicy = require('./policies/AuthenticationControllerPolicy')
 const DriverFeedbackController = require('./controllers/DriverFeedbackController')
+const PassengerFeedbackController = require('./controllers/PassengerFeedbackController')
+const PassengerCancelRequest = require('./controllers/PassengerCancelRequestController')
 const DriverLocationController = require('./controllers/LocationController')
 
 module.exports = (app) => {
@@ -23,6 +25,18 @@ module.exports = (app) => {
     app.post('/saveDriverFeedback', //middleway function to save driver's feedback on passengers
         DriverFeedbackController.saveDriverFeedback)
 
-    app.post('/getDriverFeedbacks', //middleway function to save driver's feedback on passengers
+    app.post('/getDriverFeedbacks', //middleway function to get driver's feedback on passengers
         DriverFeedbackController.getDriverFeedbacks)
+    
+    app.post('/savePassengerFeedback', //middleway function to save Passenger's feedback on drivers
+        PassengerFeedbackController.savePassengerFeedback)
+
+    app.post('/getPassengerFeedbacks', //middleway function to get Passenger's feedback on drivers
+        PassengerFeedbackController.getPassengerFeedbacks)
+    
+    app.post('/savePassengerCancelFeedback', //middleway function to save driver's feedback on canceled request
+        PassengerCancelRequest.savePassengerCancelFeedback)
+
+    app.post('/getPassengerCancelFeedbacks', //middleway function to save driver's feedback on canceled request
+        PassengerCancelRequest.getPassengerCancelFeedbacks)
 }

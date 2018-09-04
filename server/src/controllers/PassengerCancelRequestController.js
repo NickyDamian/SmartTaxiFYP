@@ -1,14 +1,14 @@
-const DriverFeedback = require('../models/DriverFeedback');
+const PassengerCancelRequest = require('../models/PassengerCancelRequest');
 
-module.exports = {
-    async saveDriverFeedback(req, res) {
-        const {passengerID} = req.body
-        const review = await DriverFeedback.findOne({
-            passengerID: passengerID
+module.exports = { 
+    async savePassengerCancelFeedback(req, res) {
+        console.log(req.body.feedbacks, "Don Gaiiiiiiiiiiiiiiiiiiiiiiiiii", req.body.passengerID)
+        const cancel = await PassengerCancelRequest.findOne({
+            passengerID: req.body.passengerID
         })
-        //Check if passenger had a feedback before. If not then create new driver item
-        if (!review) {
-            DriverFeedback.create(req.body).then(function (comments) {
+        //Check if driver had a feedback before. If not then create new passenger item
+        if (!cancel) {
+            PassengerCancelRequest.create(req.body).then(function (comments) {
                 res.send({
                     saved: comments,
                     message: `Successfully saved driver's feedback on passenger`,
@@ -22,17 +22,17 @@ module.exports = {
                 console.log(next)
             }); //send back the object to client that res for the endpoint
         }
-        //If passenger feedback exist, find the corrent driver and update its location
+        //If driver feedback exist, find the corrent passenger and update its location
         else {
             try {
-                const driverFeedback = await DriverFeedback.update({
-                    'passengerID': passengerID
+                const passengerFeedback = await PassengerCancelRequest.update({
+                    'passengerID': req.body.passengerID
                 }, {
                     $push: {
                         'feedbacks': req.body.feedbacks
                     }
                 })
-                res.send(driverFeedback)
+                res.send(passengerFeedback)
             } catch (err) {
                 console.log(err)
                 res.status(500).send({
@@ -41,9 +41,9 @@ module.exports = {
             }
         }
     },
-    async getDriverFeedbacks(req,res) {
+    async getPassengerCancelFeedbacks(req,res) {
         try {
-            const feedback = await DriverFeedback.findOne({
+            const feedback = await PassengerCancelRequest.findOne({
                 passengerID: req.body.passengerID
             })
             if(feedback) {
@@ -65,5 +65,5 @@ module.exports = {
                 condition: false
             })
         }
-    },
+    }
 }
