@@ -9,5 +9,11 @@ export default {
     },
     savePassengerFeedback (rating) {
         return Api().post('savePassengerFeedback', rating);
+    },
+    saveBadRequest (rating) {
+        return Api().post('savePassengerCancelFeedback', rating);
+    },
+    getBadRequest (id) {
+        return Api().post('getPassengerCancelFeedbacks', id);
     }
 }

@@ -68,6 +68,26 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <v-dialog v-model="noNearDriversAvailable" width="500" persistent>
+        <v-card>
+          <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+            No Nearby Drivers!
+          </v-card-title>
+
+          <v-card-text>
+            We are sorry to inform you that we are unable to find any nearby drivers for you at this time.
+          </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" flat @click="noNearDriversAvailable = false, confirmationBoxDisplay()">
+              Okay
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </div>
 </template>
@@ -76,6 +96,8 @@
   export default {
     data() {
       return {
+        x: 1, //Value to disable click button once book button has been clicked
+        noNearDriversAvailable: false,
         comment: '',
         commentDialog: false,
         notifications: false,
@@ -120,16 +142,19 @@
       },
       setProgress() {
         var i = 1
-        this.interval = setInterval(() => {
-          if (this.value === 100) {
-            if (i === 1) {
-              this.getCurrentPosition()
-              i++
+        if (this.x === 1) {
+          this.x++
+          this.interval = setInterval(() => {
+            if (this.value === 100) {
+              if (i === 1) {
+                this.getCurrentPosition()
+                i++
+              }
+              return (this.value = 0);
             }
-            return (this.value = 0);
-          }
-          this.value += 10
-        }, 1000)
+            this.value += 10
+          }, 500)
+        }
       },
       findDriverWithShortestDistance() {
         var minimum = 1000 //Base number as 1000 since radius won't cover pass that (Not suitable for real production)
@@ -147,15 +172,21 @@
             }
           }
         }
-        console.log(minimum, shortestDistanceDriver[1])      
-        //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
-        this.$socket.emit('sendRequest', {
-          driverId: shortestDistanceDriver[1],
-          passengerId: this.$socket.id,
-          startLocation: this.startLocation,
-          endLocation: this.endLocation,
-          comment: this.comment
-        })
+        console.log(minimum, shortestDistanceDriver[1])
+        if (minimum < 4.5) {
+          //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
+          this.$socket.emit('sendRequest', {
+            driverId: shortestDistanceDriver[1],
+            passengerId: this.$socket.id,
+            startLocation: this.startLocation,
+            endLocation: this.endLocation,
+            comment: this.comment
+          })
+        } else {
+          this.noNearDriversAvailable = true
+          this.$store.dispatch('setStartThePassengerInterval', true)
+        }
+
       },
       compareDistance(currentUserPos) {
         //Calculate radius between all available drivers

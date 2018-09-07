@@ -7,6 +7,7 @@ export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
         stopThePassengerInterval: false, //Once request is sent, stop the interval
+        startThePassengerInterval: false, //Re-launch interval if nearby drivers are available
         MenuConfirmation: false, //menu confirmation before booking for a ride (Passenger)
         DriverMenuConfirmation: false, //menu confirmation before accepting a request (Driver)
         stopDriverInterval: false, //Stop the interval when driver has accepted a request
@@ -61,6 +62,9 @@ export default new Vuex.Store({
         setStopThePassengerInterval (state, stopThePassengerInterval){
             state.stopThePassengerInterval = stopThePassengerInterval
         },
+        setStartThePassengerInterval (state, startThePassengerInterval){
+            state.startThePassengerInterval = startThePassengerInterval
+        },
     },
     actions: {
         setMenuConfirmation ({commit}, menuConfirmation) {
@@ -101,6 +105,9 @@ export default new Vuex.Store({
         },
         setStopThePassengerInterval ({commit}, stopThePassengerInterval) {
             commit('setStopThePassengerInterval', stopThePassengerInterval)
+        },
+        setStartThePassengerInterval ({commit}, startThePassengerInterval) {
+            commit('setStartThePassengerInterval', startThePassengerInterval)
         }
     }
 })

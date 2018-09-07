@@ -147,7 +147,7 @@
     <v-dialog v-model="feedbackDialog" width="500" persistent>
       <v-card>
         <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
-          Rate Your Ride
+          Ride Over?
         </v-card-title>
 
         <v-card-text>
@@ -223,6 +223,9 @@
       },
       canceledRequest(data) {
         clearInterval(this.theIntervalWhenDriverArrives)
+      },
+      canceledRequest(data) {
+        this.feedbackDialog = true
       }
     },
     props: [
@@ -236,7 +239,7 @@
         if (this.$store.state.typeOfUser == 'Passenger') {
           try {
             const response = await FeedbackService.savePassengerFeedback({
-              driverID: "nickydamian25@gmail.com",
+              driverID: "Nicky",
               feedbacks: [{
                 rating: this.rating,
                 comment: this.feedback
@@ -246,16 +249,30 @@
             this.error = error.response.data.error
           }
         } else {
-          try {
-            const response = await FeedbackService.saveDriverFeedback({
-              passengerID: "nickydamian25@gmail.com",
-              feedbacks: [{
-                rating: this.rating,
-                comment: this.feedback
-              }]
-            })
-          } catch (error) {
-            this.error = error.response.data.error
+          if (this.rating >= 3) {
+            try {
+              const response = await FeedbackService.saveDriverFeedback({
+                passengerID: "KappaDon",
+                feedbacks: [{
+                  rating: this.rating,
+                  comment: this.feedback
+                }]
+              })
+            } catch (error) {
+              this.error = error.response.data.error
+            }
+          } else {
+            try {
+              const response = await FeedbackService.saveBadRequest({
+                passengerID: "KappaDon",
+                feedbacks: [{
+                  driverName: "Jeff",
+                  comment: this.feedback
+                }]
+              })
+            } catch (error) {
+              this.error = error.response.data.error
+            }
           }
         }
         this.rating = 5
@@ -299,6 +316,7 @@
       },
       cancelBooking() {
         this.$store.dispatch('setCancelRequest', true)
+        this.$store.dispatch('setCommentForPassenger', null)
       },
       checkIfJourneyCompleted() {
         if (this.$store.state.typeOfUser === 'Passenger' && !this.rideComplete) {
@@ -313,9 +331,9 @@
           message: true,
           passengerId: this.passengerID
         })
-        console.log(this.passengerID)
         this.$store.dispatch('setDisplayJourneyCompletedForPassenger', false)
         this.$store.dispatch('setJourneyCompleted', true)
+        this.$store.dispatch('setCommentForPassenger', null)
       }
     }
   }

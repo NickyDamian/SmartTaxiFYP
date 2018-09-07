@@ -13,7 +13,7 @@
           <v-btn color="grey lighten-5">
             <v-icon>credit_card</v-icon>
           </v-btn>
-          <v-btn color="grey lighten-5" class="option-button" @click.native="passengerBadRequestDialog = true">
+          <v-btn color="grey lighten-5" class="option-button" @click.native="getBadRequests(),passengerBadRequestDialog = true">
             <v-icon>linear_scale</v-icon>
           </v-btn>
           <v-btn dark color="secondary" @click.native="confirmationBoxDisplay(), show=true, acceptRequest()">Accept</v-btn>
@@ -38,49 +38,41 @@
         </v-flex>
       </v-card>
       <v-dialog v-model="passengerBadRequestDialog" fullscreen persistent>
-      <v-card>
-        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
-          Bad Requests?
-        </v-card-title>
-
-        <v-list two-line>
-          <template v-for="(item, index) in items">
-            <v-list-tile :key="index" avatar>
-              <v-list-tile-content>
-                <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-                <v-list-tile-sub-title>{{ item.subtitle }}</v-list-tile-sub-title>
-              </v-list-tile-content>
-            </v-list-tile>
-            <v-divider v-if="index + 1 < items.length" :key="`divider-${index}`"></v-divider>
-          </template>
-        </v-list>
-
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" @click="passengerBadRequestDialog = false">
-            Okay
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+        <v-card>
+          <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+            Bad Requests?
+          </v-card-title>
+          <v-list two-line>
+            <template v-for="(badrequest, index) in badrequests">
+              <v-list-tile :key="index" avatar>
+                <v-list-tile-content>
+                  <v-list-tile-title>{{ badrequest.driverName }}</v-list-tile-title>
+                  <v-list-tile-sub-title>{{ badrequest.comment }}</v-list-tile-sub-title>
+                </v-list-tile-content>
+              </v-list-tile>
+              <v-divider v-if="index + 1 < badrequests.length" :key="`divider-${index}`"></v-divider>
+            </template>
+            <v-divider></v-divider>
+          </v-list>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" @click="passengerBadRequestDialog = false">
+              Okay
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </div>
 </template>
 
 <script>
-import LocationService from '@/services/LocationService'
+  import LocationService from '@/services/LocationService'
+  import FeedbackService from '@/services/FeedbackService'
   export default {
     data() {
       return {
-        items: [
-          { title: 'Ali Connors', subtitle: "I'll be in your neighborhood doing errands this weekend. Do you want to hang out?" },
-          { title: 'Scrott', subtitle: "Wish I could come, but I'm out of town this weekend." },
-          { title: 'Sandra Adams', subtitle: 'Do you have Paris recommendations? Have you ever been?' },
-          { title: 'Trevor Hansen', subtitle: 'Have any ideas about what we should get Heidi for her birthday?' },
-          { title: 'Britta Holt', subtitle: 'We should eat this: Grate, Squash, Corn, and tomatillo Tacos.' }
-        ],
+        badrequests: null,
         passengerBadRequestDialog: false,
         dialog: true,
         notifications: false,
@@ -98,8 +90,20 @@ import LocationService from '@/services/LocationService'
     mounted() {
       // console.log(this.data[0][1])
       // console.log(this.passengerId)
+      console.log("Its been a kappa pride kinda day")
+      this.getBadRequests()
     },
     methods: {
+      async getBadRequests() {
+        try {
+          const badRating = await FeedbackService.getBadRequest({
+            passengerID: "KappaDon"
+          })
+          this.badrequests = badRating.data.rating.feedbacks
+        } catch (error) {
+          this.error = error.response.data.error
+        }
+      },
       confirmationBoxDisplay() {
         this.$store.dispatch('setDriverMenuConfirmation', false)
       },
@@ -107,13 +111,13 @@ import LocationService from '@/services/LocationService'
         this.$socket.emit('requestStatusToAll', {
           driverId: this.$socket.id,
         })
-        
+
         this.$socket.emit('requestStatus', {
           message: "Accepted",
           passengerId: this.passengerId,
           driverId: this.$socket.id
         })
-        
+
         this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
         this.deleteDriverFromServer() //Delete driver location from available driver collection
       },
@@ -123,7 +127,7 @@ import LocationService from '@/services/LocationService'
           passengerId: this.passengerId
         })
       },
-      async deleteDriverFromServer () {
+      async deleteDriverFromServer() {
         try {
           const response = await LocationService.deleteLocation({
             socketID: this.$socket.id

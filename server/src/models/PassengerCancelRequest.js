@@ -9,6 +9,7 @@ const passengerCancelRequestSchema = new Schema({
         unique: true
     },
     feedbacks:[{
+        driverName: {type: String},
         comment: {type: String}
     }]
 });

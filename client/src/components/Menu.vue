@@ -215,6 +215,9 @@
       //Journey Completed
       this.journeyIsCompleted()
 
+      //Re-start interval when no nearby drivers are available
+      this.startIntervalOnceNoNearbyDrivers()
+
     },
 
     components: {
@@ -225,7 +228,16 @@
     },
 
     methods: {
-      stopTheInterval () {
+      startIntervalOnceNoNearbyDrivers() {
+        var self = this
+        var x = setInterval(() => {
+          if(self.$store.state.startThePassengerInterval) {
+            self.startTheInterval()
+            self.$store.dispatch('setStartThePassengerInterval', false)
+          }
+        }, 1000)
+      },
+      stopTheInterval() {
         var self = this
         //Display route to the destination once driver has arrived!
         var x = setInterval(function () {
