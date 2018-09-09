@@ -4,7 +4,7 @@ import Login from '@/components/Login'
 import Register from '@/components/Register'
 import Menu from '@/components/Menu'
 import Test from '@/components/Testing'
-import RequestPage from '@/components/Reuse/InTransitStatusPage'
+import Histories from '@/components/History'
 
 Vue.use(Router)
 
@@ -31,9 +31,9 @@ export default new Router({
       component: Test
     },
     {
-      path: '/requestPage',
-      name: 'requestPage',
-      component: RequestPage
+      path: '/history',
+      name: 'history',
+      component: Histories
     }
   ]
 })

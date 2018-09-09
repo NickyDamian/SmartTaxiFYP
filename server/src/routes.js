@@ -4,6 +4,7 @@ const DriverFeedbackController = require('./controllers/DriverFeedbackController
 const PassengerFeedbackController = require('./controllers/PassengerFeedbackController')
 const PassengerCancelRequest = require('./controllers/PassengerCancelRequestController')
 const DriverLocationController = require('./controllers/LocationController')
+const HistoryController = require('./controllers/HistoryController')
 
 module.exports = (app) => {
     app.post('/register', //middleway function to authenticate
@@ -39,4 +40,10 @@ module.exports = (app) => {
 
     app.post('/getPassengerCancelFeedbacks', //middleway function to save driver's feedback on canceled request
         PassengerCancelRequest.getPassengerCancelFeedbacks)
+
+    app.post('/saveHistory', //middleway function to save history of completed ride
+        HistoryController.saveHistory)
+    
+    app.post('/getHistory', //middleway function to save history of completed ride
+        HistoryController.getHistory)
 }

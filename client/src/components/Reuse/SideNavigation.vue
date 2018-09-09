@@ -1,5 +1,5 @@
 <template>
-    <v-layout>
+  <v-layout>
     <v-toolbar color="primary" dark fixed>
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>Smart Taxi</v-toolbar-title>
@@ -22,7 +22,7 @@
       <v-list class="pt-0" dense>
         <v-divider></v-divider>
 
-        <v-list-tile v-for="item in items" :key="item.title" @click="navigateTo({name: item.link})">
+        <v-list-tile v-for="item in items" :key="item.title" @click="navigateTo({name: item.link}), loggedout(item.link)">
           <v-list-tile-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-tile-action>
@@ -34,7 +34,7 @@
         </v-list-tile>
       </v-list>
     </v-navigation-drawer>
-    </v-layout>
+  </v-layout>
 </template>
 
 <script>
@@ -67,8 +67,17 @@
     },
     methods: {
       navigateTo(route) {
-        this.$router.push(route)
+          this.$router.push(route)
       },
+      loggedout(item) {
+        if (item === 'login') {
+          if (this.$store.state.typeOfUser === 'Driver') {
+            this.$store.dispatch('setDriverLoggedOut', true) //Remove driver from server and all other passenger client
+          } else {
+            this.$store.dispatch('setPassengerLoggedOut', true)
+          }
+        }
+      }
     }
   }
 

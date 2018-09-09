@@ -8,11 +8,12 @@
     <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
-    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
-      :passengerID='this.passengerID'></DriverConfirmationDialogBox>
-    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :comment='this.comment'></RideInfo>
-    <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
-      :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
+    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.theEndAddress'
+      :money='this.money' :passengerID='this.passengerID'></DriverConfirmationDialogBox>
+    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :clientName='this.passengerName' :comment='this.comment'
+      :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money"></RideInfo>
+    <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
+      :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
       <v-btn color="red" flat @click="snackbar = false">
         Close
@@ -66,9 +67,11 @@
         end: null,
         vueGMap: null,
         confirm: true,
-        time: 45,
-        money: 30,
-        address: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi cursus magna at mi ultricies, quis vehicula mi pretium.',
+        time: null,
+        money: null,
+        distance: null,
+        theStartAddress: null,
+        theEndAddress: null,
         options: {
           componentRestrictions: {
             country: "my"
@@ -98,7 +101,8 @@
         text: 'Please specify both addresses!',
         sendCurrentLocationInterval: null,
         checkIntervalRequest: false,
-        passengerID: null
+        passengerID: null,
+        passengerName: null,
       }
 
     },
@@ -109,6 +113,13 @@
       },
       //Listen for event on any driver-location messagefrom the server
       sendRequest(data) {
+        this.time = data.rideRequest[0]
+        this.money = data.rideRequest[1]
+        this.theStartAddress = data.rideRequest[2]
+        this.theEndAddress = data.rideRequest[3]
+        this.passengerName = data.rideRequest[4]
+        this.distance = data.rideRequest[5]
+        this.money = data.rideRequest[6]
         this.passengerID = data.passengerId
         this.start = data.startLocation
         this.end = data.endLocation
@@ -148,6 +159,12 @@
 
       //Journey Completed
       this.journeyIsCompleted()
+
+      //Driver has logged out
+      var self = this
+      setInterval(() => {
+        self.prepareForLoggedOut()
+      },1000)
     },
     components: {
       Footer,
@@ -156,6 +173,28 @@
       RideInfo
     },
     methods: {
+      prepareForLoggedOut() {
+        if (this.$store.state.driverLoggedOut) {
+          this.$store.dispatch('setDriverLoggedOut', false)
+          this.driverHasLoggedOut()
+          clearInterval(this.sendCurrentLocationInterval)
+          this.$socket.emit('requestStatusToAll', {
+            driverId: this.$socket.id,
+          })
+          console.log("Kappa")
+        }
+      },
+      async driverHasLoggedOut() {
+          this.$store.dispatch('setDriverLoggedOut', false) //Remove driver from server and all other passenger client
+          try {
+            const response = await LocationService.deleteLocation({
+              socketID: this.$socket.id
+            })
+          } catch (error) {
+            this.error = error.response.data.error
+          }
+          console.log("Kappa Pride")
+      },
       journeyIsCompleted() {
         var self = this
         //Display route to the destination once driver has arrived!
@@ -363,6 +402,9 @@
           }
         }
       }
+    },
+    beforeDestroy() {
+      clearInterval(this.sendCurrentLocationInterval)
     }
   }
 

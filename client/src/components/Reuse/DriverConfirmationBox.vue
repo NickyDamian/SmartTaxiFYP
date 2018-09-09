@@ -21,7 +21,7 @@
         <v-flex class="pt-2 pb-2 time-label">
           <label>Time Estimation</label>
           <v-icon class="time-icon">access_time</v-icon>
-          <v-label>{{time}} minutes</v-label>
+          <v-label>{{time}}</v-label>
           <v-progress-linear color="success" height="5" value="70"></v-progress-linear>
         </v-flex>
         <v-flex class="address-section">
@@ -115,7 +115,8 @@
         this.$socket.emit('requestStatus', {
           message: "Accepted",
           passengerId: this.passengerId,
-          driverId: this.$socket.id
+          driverId: this.$socket.id,
+          driverName: 'Don'
         })
 
         this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
@@ -175,15 +176,14 @@
   }
 
   .address-section {
-    margin-left: -120px !important;
+    margin-left: -20px !important;
     font-weight: 600;
     font-size: 18px;
   }
 
   .address {
-    font-weight: 300;
+    font-weight: 400;
     font-size: 15px;
-    text-align: justify !important;
     padding: 0 45px;
   }
 

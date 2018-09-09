@@ -19,7 +19,12 @@ export default new Vuex.Store({
         cancelRequest: false, //Driver has cancel the request since passenger hasn`t show up
         displayJourneyCompletedForPassenger: false, //Allow passenger to provide their feeback once journey has been completed
         commentForPassenger: null, //Display the additional note the passenger has written when driver accepted request
-        journeyCompleted: null //State when the journey is completed
+        journeyCompleted: null, //State when the journey is completed
+        clientName: 'Nicholas Damian',
+        clientEmailAddress: 'nicky@gmail.com',
+        driverLoggedOut: false, //State when driver logs out of app (delete driver from server and inform all other passenger app)
+        passengerLoggedOut: false, //State when passenger logs out of app
+        token: true
     }, //keeping track of changes
 
     mutations: {
@@ -65,6 +70,18 @@ export default new Vuex.Store({
         setStartThePassengerInterval (state, startThePassengerInterval){
             state.startThePassengerInterval = startThePassengerInterval
         },
+        setStartThePassengerInterval (state, startThePassengerInterval){
+            state.startThePassengerInterval = startThePassengerInterval
+        },
+        setDriverLoggedOut (state, driverLoggedOut){
+            state.driverLoggedOut = driverLoggedOut
+        },
+        setPassengerLoggedOut (state, passengerLoggedOut){
+            state.passengerLoggedOut = passengerLoggedOut
+        },
+        setToken (state, token){
+            state.token = token
+        }
     },
     actions: {
         setMenuConfirmation ({commit}, menuConfirmation) {
@@ -108,6 +125,15 @@ export default new Vuex.Store({
         },
         setStartThePassengerInterval ({commit}, startThePassengerInterval) {
             commit('setStartThePassengerInterval', startThePassengerInterval)
+        },
+        setDriverLoggedOut ({commit}, driverLoggedOut) {
+            commit('setDriverLoggedOut', driverLoggedOut)
+        },
+        setPassengerLoggedOut ({commit}, passengerLoggedOut) {
+            commit('setPassengerLoggedOut', passengerLoggedOut)
+        },
+        setToken ({commit}, token) {
+            commit('setToken', token)
         }
     }
 })

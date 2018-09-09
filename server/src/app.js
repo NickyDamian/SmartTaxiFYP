@@ -55,9 +55,15 @@ io.on('connection', function(socket) { //Each client will have their own socket
         io.to(data.passengerId).emit('notifyDriverHasReached',data)
     })
 
-    //Notify passenger/driver that request has been canceled
+    //Notify passenger that request has been canceled
     socket.on('canceledRequest', function(data){
         io.to(data.id).emit('canceledRequest',data)
+    })
+
+    //Notify driver that request has been canceled
+    socket.on('preMatureCanceledRequest', function(data){
+        console.log(data.driverId)
+        io.to(data.driverId).emit('preMatureCanceledRequest',data)
     })
 
     //Passenger cannot cancel the booking once passenger in the driver's car

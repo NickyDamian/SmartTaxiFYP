@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app v-show="$store.state.token">
     <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
     <div v-if="!$store.state.rideInfo && !rideInfo">
       <div class="start-location">
@@ -19,11 +19,14 @@
     <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
-    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :address='this.address' :money='this.money'
-      :data='this.setPoints' :start='this.start' :end='this.end'></ConfirmationDialogBox>
-    <RideInfo v-if="$store.state.rideInfo" :driverID='this.driverID' :rideActuallyCompleted='this.rideActuallyCompleted'></RideInfo>
-    <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'" :right="x === 'right'"
-      :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
+    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :startAddress='this.theStartAddress'
+      :endAddress='this.theEndAddress' :money='this.money' :data='this.setPoints' :start='this.start' :end='this.end'
+      :distance='this.distance'></ConfirmationDialogBox>
+    <RideInfo v-if="$store.state.rideInfo" :driverID='this.driverID' :clientName='this.driverName'
+      :rideActuallyCompleted='this.rideActuallyCompleted' :startAddress='this.theStartAddress' :endAddress='this.theEndAddress'
+      :money='this.money'></RideInfo>
+    <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
+      :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
       <v-btn color="red" flat @click="snackbar = false">
         Close
@@ -69,17 +72,20 @@
       return {
         rideActuallyCompleted: false,
         driverID: null,
-        driverArrivedMessage : null,
+        driverName: null,
+        driverArrivedMessage: null,
         notifyPassengerDialog: false,
         rideInfo: false,
         start: null,
         end: null,
+        distance: null,
         selectedDriverMarker: null,
         vueGMap: null,
         confirm: true,
-        time: 45,
-        money: 30,
-        address: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi cursus magna at mi ultricies, quis vehicula mi pretium.',
+        time: null,
+        money: null,
+        theStartAddress: null,
+        theEndAddress: null,
         options: {
           componentRestrictions: {
             country: "my"
@@ -144,6 +150,7 @@
         //Delete the driver from the marker array since driver is no longer available
         if (data.message == 'Accepted') {
           this.driverID = data.driverId
+          this.driverName = data.driverName
           this.rideInfo = true //Show the ride info if driver accept the ride request
           this.setPoints = [] //Clear all the available driver markers
         } else {
@@ -193,7 +200,6 @@
 
     mounted() {
       this.$store.dispatch('setTypeOfUser', 'Passenger') //Set User as Passenger
-
       var self = this
       console.log('Client socket has been connected Kappa', this.$socket.id)
       //Create the map
@@ -218,6 +224,11 @@
       //Re-start interval when no nearby drivers are available
       this.startIntervalOnceNoNearbyDrivers()
 
+      //Driver has logged out
+      var self = this
+      setInterval(() => {
+        self.passengerHasLoggedOut()
+      }, 1000)
     },
 
     components: {
@@ -228,10 +239,19 @@
     },
 
     methods: {
+      passengerHasLoggedOut() {
+        if (this.$store.state.passengerLoggedOut) {
+          this.setPoints = null
+          console.log(this.driverLocationInterval, "Kelf")
+          clearInterval(this.driverLocationInterval)
+          console.log(this.driverLocationInterval, "Don")
+          this.$store.dispatch('setPassengerLoggedOut', false) //Remove driver from server and all other passenger client
+        }
+      },
       startIntervalOnceNoNearbyDrivers() {
         var self = this
         var x = setInterval(() => {
-          if(self.$store.state.startThePassengerInterval) {
+          if (self.$store.state.startThePassengerInterval) {
             self.startTheInterval()
             self.$store.dispatch('setStartThePassengerInterval', false)
           }
@@ -294,6 +314,7 @@
         self.getLocations()
         //Get list of available driver locations every 10 seconds
         this.driverLocationInterval = setInterval(function () {
+          console.log("Start")
           self.getLocations()
         }, 10000)
       },
@@ -403,6 +424,11 @@
         }, function (response, status) {
           if (status === 'OK') {
             vm.directionsDisplay.setDirections(response)
+            vm.time = response.routes[0].legs[0].duration.text
+            vm.theStartAddress = response.routes[0].legs[0].start_address
+            vm.theEndAddress = response.routes[0].legs[0].end_address
+            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * 1).toFixed(2)
+            vm.distance = (response.routes[0].legs[0].distance.value / 1000).toFixed(2)
           } else {
             console.log('Directions request failed due to ' + status)
           }
@@ -419,6 +445,9 @@
           self.centerMap(pos)
         });
       }
+    },
+    beforeDestroy() {
+      clearInterval(this.driverLocationInterval)
     }
   }
 

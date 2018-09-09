@@ -17,7 +17,7 @@
       <div class='riderInfo'>
         <v-flex class='pt-2'>
           <v-icon>person_pin</v-icon>
-          <label>Don Darudei</label>
+          <label>{{clientName}}</label>
         </v-flex>
         <v-flex class='pt-1 pb-1' v-if='$store.state.typeOfUser == "Passenger"'>
           <v-icon>aspect_ratio</v-icon>
@@ -29,7 +29,7 @@
           <v-icon>add</v-icon>
           <label>Smart Ride</label>
           <v-icon class="pl-3">near_me</v-icon>
-          <label>14 km</label>
+          <label>{{distance}} km</label>
         </v-flex>
         <v-flex class='pb-3'>
           <label>Rating Issa Here</label>
@@ -42,14 +42,14 @@
         <label>Start</label>
       </v-flex>
       <v-flex class="pb-2 address">
-        <label>Apu New Campus</label>
+        <label>{{startAddress}}</label>
       </v-flex>
       <v-flex class="pt-2 address-section">
         <v-icon color='cyan' class="time-icon">home</v-icon>
         <label>End</label>
       </v-flex>
       <v-flex class="pb-3 address">
-        <label>Rumah Donny Boy</label>
+        <label>{{endAddress}}</label>
       </v-flex>
       <v-flex v-if='$store.state.typeOfUser == "Driver"' class="commentSection">
         <v-textarea outline class="pl-3 pr-3" rows="3" solo label="No comments to show..." readonly v-model='this.comment'></v-textarea>
@@ -59,7 +59,7 @@
       </v-flex>
       <v-flex class="pb-2">
         <v-icon color="primary">attach_money</v-icon>
-        <label class="money">MYR 30</label>
+        <label class="money">MYR {{money}}</label>
       </v-flex>
     </v-card>
     <v-card color="primary">
@@ -93,7 +93,7 @@
             Lulz Joke
           </v-btn>
 
-          <v-btn color="green darken-1" flat="flat" @click="dialog = false, cancelBooking(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="green darken-1" flat="flat" @click="dialog = false, passengerCanceledRequest(), $store.dispatch('setRideInfo', false)">
             I'm Sure
           </v-btn>
         </v-card-actions>
@@ -164,7 +164,36 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), saveHistory(), $store.dispatch('setRideInfo', false)">
+            Submit
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="passengerCanceledFeedbackDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Ride was canceled?
+        </v-card-title>
+
+        <v-card-text>
+          Will you like to notify other drivers of your experience?
+        </v-card-text>
+
+        <v-rating v-model="rating" color="yellow darken-3" background-color="grey darken-1" empty-icon="$vuetify.icons.ratingFull"
+          full-increments></v-rating>
+
+        <v-card-actions>
+          <v-textarea outline rows="3" solo label="Additional comments..." v-model="feedback"></v-textarea>
+        </v-card-actions>
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, $store.dispatch('setRideInfo', false)">
+            Skip
+          </v-btn>
+          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, submitFeedback(), $store.dispatch('setRideInfo', false)">
             Submit
           </v-btn>
         </v-card-actions>
@@ -196,9 +225,11 @@
 
 <script>
   import FeedbackService from '@/services/FeedbackService'
+  import HistoryService from '@/services/HistoryService'
   export default {
     data() {
       return {
+        passengerCanceledFeedbackDialog: false,
         rideActuallyCompletedDialog: false,
         rideComplete: this.rideActuallyCompleted,
         rating: 5,
@@ -217,24 +248,47 @@
       canceledRequest(data) {
         this.driverReached = true
         this.beginJourney = false
+        clearInterval(this.theIntervalWhenDriverArrives)
       },
       rideActuallyCompleted(data) {
         this.rideComplete = data.message
       },
-      canceledRequest(data) {
+      preMatureCanceledRequest(data) {
+        this.$store.dispatch('setJourneyCompleted', true)
+        this.passengerCanceledFeedbackDialog = true
+        this.driverReached = true
+        this.beginJourney = false
         clearInterval(this.theIntervalWhenDriverArrives)
-      },
-      canceledRequest(data) {
-        this.feedbackDialog = true
       }
     },
     props: [
       'passengerID',
       'driverID',
       'comment',
-      'rideActuallyCompleted'
+      'rideActuallyCompleted',
+      'startAddress',
+      'endAddress',
+      'clientName',
+      'distance',
+      'money'
     ],
     methods: {
+      async saveHistory() {
+        try {
+          var historyRequest = await HistoryService.saveHistory({
+            email: "Kelf@gmail.com",
+            rideInfo: [{
+              startAddress: this.startAddress,
+              endAddress: this.endAddress,
+              rating: this.rating,
+              feedback: this.feedback,
+              price: this.money
+            }]
+          })
+        } catch (error) {
+          this.error = error.response.data.error
+        }
+      },
       async submitFeedback() {
         if (this.$store.state.typeOfUser == 'Passenger') {
           try {
@@ -249,19 +303,18 @@
             this.error = error.response.data.error
           }
         } else {
-          if (this.rating >= 3) {
-            try {
-              const response = await FeedbackService.saveDriverFeedback({
-                passengerID: "KappaDon",
-                feedbacks: [{
-                  rating: this.rating,
-                  comment: this.feedback
-                }]
-              })
-            } catch (error) {
-              this.error = error.response.data.error
-            }
-          } else {
+          try {
+            const response = await FeedbackService.saveDriverFeedback({
+              passengerID: "KappaDon",
+              feedbacks: [{
+                rating: this.rating,
+                comment: this.feedback
+              }]
+            })
+          } catch (error) {
+            this.error = error.response.data.error
+          }
+          if (this.rating < 3) {
             try {
               const response = await FeedbackService.saveBadRequest({
                 passengerID: "KappaDon",
@@ -318,6 +371,14 @@
         this.$store.dispatch('setCancelRequest', true)
         this.$store.dispatch('setCommentForPassenger', null)
       },
+      passengerCanceledRequest() {
+        this.$store.dispatch('setJourneyCompleted', true)
+        this.$store.dispatch('setCommentForPassenger', null)
+        this.$socket.emit('preMatureCanceledRequest', {
+          message: true,
+          driverId: this.driverID
+        })
+      },
       checkIfJourneyCompleted() {
         if (this.$store.state.typeOfUser === 'Passenger' && !this.rideComplete) {
           this.rideActuallyCompletedDialog = true
@@ -349,7 +410,6 @@
   }
 
   .address-section {
-    margin-left: -120px !important;
     font-weight: 600;
     font-size: 18px;
   }
@@ -357,7 +417,6 @@
   .address {
     font-weight: 400;
     font-size: 15px;
-    text-align: justify !important;
     padding: 0 52px;
   }
 

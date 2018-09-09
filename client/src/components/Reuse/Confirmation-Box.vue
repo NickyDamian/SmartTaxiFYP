@@ -21,7 +21,7 @@
         <v-flex class="pt-2 pb-2 time-label">
           <label>Time Estimation</label>
           <v-icon class="time-icon">access_time</v-icon>
-          <v-label>{{time}} minutes</v-label>
+          <v-label>{{time}}</v-label>
           <v-progress-linear color="success" height="5" value="70"></v-progress-linear>
         </v-flex>
         <v-flex class="address-section">
@@ -29,7 +29,7 @@
           <label>Address</label>
         </v-flex>
         <v-flex class="pb-3 address">
-          <label>{{address}}</label>
+          <label>{{endAddress}}</label>
         </v-flex>
         <v-divider></v-divider>
         <v-flex class="pt-2 pb-2">
@@ -119,11 +119,13 @@
     },
     props: [
       'time',
-      'address',
+      'startAddress',
+      'endAddress',
       'money',
       'data',
       'start',
-      'end'
+      'end',
+      'distance'
     ],
     mounted() {
       this.$store.dispatch('setCommentForPassenger', null)
@@ -172,10 +174,11 @@
             }
           }
         }
-        console.log(minimum, shortestDistanceDriver[1])
-        if (minimum < 4.5) {
+        console.log(minimum, shortestDistanceDriver)
+        if (minimum < 4.5 || minimum === undefined) {
           //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
           this.$socket.emit('sendRequest', {
+            rideRequest: [this.time, this.money, this.startAddress, this.endAddress, "Nicky", this.distance, this.money],
             driverId: shortestDistanceDriver[1],
             passengerId: this.$socket.id,
             startLocation: this.startLocation,
@@ -245,15 +248,14 @@
   }
 
   .address-section {
-    margin-left: -120px !important;
+    margin-left: -20px !important;
     font-weight: 600;
     font-size: 18px;
   }
 
   .address {
-    font-weight: 300;
+    font-weight: 400;
     font-size: 15px;
-    text-align: justify !important;
     padding: 0 45px;
   }
 
