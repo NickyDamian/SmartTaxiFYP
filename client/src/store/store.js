@@ -24,7 +24,8 @@ export default new Vuex.Store({
         clientEmailAddress: 'nicky@gmail.com',
         driverLoggedOut: false, //State when driver logs out of app (delete driver from server and inform all other passenger app)
         passengerLoggedOut: false, //State when passenger logs out of app
-        token: true
+        token: true,
+        searchForPlaces: false //Show search box and hide autocomplete when true
     }, //keeping track of changes
 
     mutations: {
@@ -81,6 +82,9 @@ export default new Vuex.Store({
         },
         setToken (state, token){
             state.token = token
+        },
+        setSearchForPlaces (state, searchForPlaces){
+            state.searchForPlaces = searchForPlaces
         }
     },
     actions: {
@@ -134,6 +138,9 @@ export default new Vuex.Store({
         },
         setToken ({commit}, token) {
             commit('setToken', token)
+        },
+        setSearchForPlaces ({commit}, searchForPlaces) {
+            commit('setSearchForPlaces', searchForPlaces)
         }
     }
 })

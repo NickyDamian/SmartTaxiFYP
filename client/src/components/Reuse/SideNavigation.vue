@@ -4,6 +4,10 @@
       <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>Smart Taxi</v-toolbar-title>
       <v-spacer></v-spacer>
+
+      <v-btn icon @click="searchPlaces()">
+      <v-icon>directions</v-icon>
+    </v-btn>
     </v-toolbar>
 
     <v-navigation-drawer v-model="drawer" absolute temporary>
@@ -42,6 +46,7 @@
     data() {
       return {
         drawer: false,
+        searchBox: false,
         items: [{
             title: 'History',
             icon: 'history',
@@ -66,6 +71,16 @@
       }
     },
     methods: {
+      searchPlaces() {
+        if(this.searchBox === false) {
+          this.$store.dispatch('setSearchForPlaces', true)
+          this.searchBox = true
+        }
+        else {
+          this.$store.dispatch('setSearchForPlaces', false)
+          this.searchBox = false
+        }
+      },
       navigateTo(route) {
           this.$router.push(route)
       },
