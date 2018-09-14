@@ -6,6 +6,8 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
+        loadGoogleMapsAPI: false, //Call the script only once
+        Gmap: null, //Promise request to create the Gmap
         stopThePassengerInterval: false, //Once request is sent, stop the interval
         startThePassengerInterval: false, //Re-launch interval if nearby drivers are available
         MenuConfirmation: false, //menu confirmation before booking for a ride (Passenger)
@@ -29,6 +31,12 @@ export default new Vuex.Store({
     }, //keeping track of changes
 
     mutations: {
+        setLoadGoogleMapsAPI (state, loadGoogleMapsAPI){
+            state.loadGoogleMapsAPI = loadGoogleMapsAPI
+        },
+        setGmap (state, Gmap){
+            state.Gmap = Gmap
+        },
         setMenuConfirmation (state, menuConfirmation){
             state.MenuConfirmation = menuConfirmation
         },
@@ -88,8 +96,14 @@ export default new Vuex.Store({
         }
     },
     actions: {
+        setLoadGoogleMapsAPI ({commit}, loadGoogleMapsAPI) {
+            commit('setLoadGoogleMapsAPI', loadGoogleMapsAPI) //do async calls/logic
+        },
+        setGmap ({commit}, Gmap) {
+            commit('setGmap', Gmap) //do async calls/logic
+        },
         setMenuConfirmation ({commit}, menuConfirmation) {
-            commit('setMenuConfirmation', menuConfirmation) //do async calls/logic
+            commit('setMenuConfirmation', menuConfirmation)
         },
         setDriverMenuConfirmation ({commit}, DriverMenuConfirmation) {
             commit('setDriverMenuConfirmation', DriverMenuConfirmation)

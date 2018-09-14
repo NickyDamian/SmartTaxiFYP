@@ -1,7 +1,7 @@
 <template>
   <v-app v-show="$store.state.token">
     <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
-    <div v-show="!$store.state.rideInfo && !rideInfo && !$store.state.searchForPlaces">
+    <div v-if="!$store.state.rideInfo && !rideInfo">
       <div class="start-location">
         <v-icon color="blue" class="pl-2">map</v-icon>
         <input class="search-box" @click="autoComplete" id="pac-input" type="text" placeholder="Starting location">
@@ -14,7 +14,7 @@
     </div>
     <v-toolbar v-if="!$store.state.rideInfo && !rideInfo && $store.state.searchForPlaces" class="keywordSearch">
       <v-text-field hide-details prepend-icon="home" single-line label="Search" v-model="searchByKeywords"></v-text-field>
-      <v-btn icon class="pt-2" @click="searchForPlaces()">
+      <v-btn icon @click="searchForPlaces()">
         <v-icon>search</v-icon>
       </v-btn>
     </v-toolbar>
@@ -61,37 +61,37 @@
     <v-dialog v-model="searchByKeywordsDialog" width="500" persistent>
       <v-card>
         <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
-            <v-btn dark icon @click="searchByKeywordsDialog = false, selectedSearchPlaces = null, searchByKeywords = ''">
-                <v-icon class="pr-1">arrow_back</v-icon>
-            </v-btn>       
+          <v-btn dark icon @click="searchByKeywordsDialog = false, selectedSearchPlaces = null, searchByKeywords = ''">
+            <v-icon class="pr-1">arrow_back</v-icon>
+          </v-btn>
           Nearby Places
         </v-card-title>
         <div v-for="(selectedSearchPlace, index) in selectedSearchPlaces" :key='index'>
-        <v-flex class="pt-2 pr-2 pb-1">
+          <v-flex class="pt-2 pr-2 pb-1">
             <v-icon color='red' class="time-icon">home</v-icon>
             <label style="font-weight: 600; font-size: 18px">{{selectedSearchPlace.placeName}}</label>
-        </v-flex>
-        <v-img :src="selectedSearchPlace.picture" aspect-ratio="1.7"></v-img>
-        <v-rating :value='selectedSearchPlace.rating' readonly half-increments></v-rating>
-        <v-btn color="primary" @click="searchByKeywordsDialog = false, selectedSearchPlaces = null, getCurrentLocation(selectedSearchPlace.location), searchByKeywords = ''">
+          </v-flex>
+          <v-img :src="selectedSearchPlace.picture" aspect-ratio="1.7"></v-img>
+          <v-rating :value='selectedSearchPlace.rating' readonly half-increments></v-rating>
+          <v-btn color="primary" @click="searchByKeywordsDialog = false, selectedSearchPlaces = null, getCurrentLocation(selectedSearchPlace.location), searchByKeywords = ''">
             <v-icon>directions_car</v-icon>
             Go Here
-        </v-btn>
-        <v-divider class="mt-2"></v-divider>
+          </v-btn>
+          <v-divider class="mt-2"></v-divider>
         </div>
         <div v-if="noPlaceFound">
-        <v-card-text>
-          Unable to find the any nearby places. Please try again. Thank you.
-        </v-card-text>
+          <v-card-text>
+            Unable to find the any nearby places. Please try again. Thank you.
+          </v-card-text>
 
-        <v-divider></v-divider>
+          <v-divider></v-divider>
 
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="searchByKeywordsDialog = false, noPlaceFound = false, selectedSearchPlaces = null, searchLocationStatus = false, searchByKeywords = ''">
-            Okay
-          </v-btn>
-        </v-card-actions>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" flat @click="searchByKeywordsDialog = false, noPlaceFound = false, selectedSearchPlaces = null, searchLocationStatus = false, searchByKeywords = ''">
+              Okay
+            </v-btn>
+          </v-card-actions>
         </div>
       </v-card>
     </v-dialog>
@@ -113,19 +113,80 @@
   export default {
     data() {
       return {
-        searchBank: [
-            {placeName: 'Maybank', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489023427546710016/Maybank.png", rating: 4, location: [{lat: 3.047285 ,lng: 101.689007}]},
-            {placeName: 'Standard Chartered', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489037973484994570/unknown.png", rating: 4, location: [{lat: 3.055845,lng: 101.704086}]},
+        searchBank: [{
+            placeName: 'Maybank',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489023427546710016/Maybank.png",
+            rating: 4,
+            location: [{
+              lat: 3.047285,
+              lng: 101.689007
+            }]
+          },
+          {
+            placeName: 'Standard Chartered',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489037973484994570/unknown.png",
+            rating: 4,
+            location: [{
+              lat: 3.055845,
+              lng: 101.704086
+            }]
+          },
         ],
-        searchDiner: [
-            {placeName: 'StarBucks Coffee', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489046128483106817/unknown.png", rating: 4.5, location: [{lat: 3.055845,lng: 101.704086}]},
-            {placeName: 'Murni', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489046703136178178/unknown.png", rating: 4, location: [{lat: 3.060171,lng: 101.667576}]},
-            {placeName: 'KFC', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489045226988634122/unknown.png", rating: 3.5, location: [{lat: 3.049132  ,lng: 101.679663}]},
-            {placeName: 'Picante', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489045680434839563/unknown.png", rating: 3, location: [{lat: 3.047285,lng: 101.689007}]}
+        searchDiner: [{
+            placeName: 'StarBucks Coffee',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489046128483106817/unknown.png",
+            rating: 4.5,
+            location: [{
+              lat: 3.055845,
+              lng: 101.704086
+            }]
+          },
+          {
+            placeName: 'Murni',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489046703136178178/unknown.png",
+            rating: 4,
+            location: [{
+              lat: 3.060171,
+              lng: 101.667576
+            }]
+          },
+          {
+            placeName: 'KFC',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489045226988634122/unknown.png",
+            rating: 3.5,
+            location: [{
+              lat: 3.049132,
+              lng: 101.679663
+            }]
+          },
+          {
+            placeName: 'Picante',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489045680434839563/unknown.png",
+            rating: 3,
+            location: [{
+              lat: 3.047285,
+              lng: 101.689007
+            }]
+          }
         ],
-        searchPetrolStation: [
-            {placeName: 'Shell Station', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489048658013323264/unknown.png", rating: 4.5, location: [{lat: 3.055829,lng: 101.704526}]},
-            {placeName: 'Petronas Station', picture: "https://cdn.discordapp.com/attachments/303839139554394112/489048032760037376/unknown.png", rating: 4, location: [{lat: 3.047285,lng: 101.689007}]}
+        searchPetrolStation: [{
+            placeName: 'Shell Station',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489048658013323264/unknown.png",
+            rating: 4.5,
+            location: [{
+              lat: 3.055829,
+              lng: 101.704526
+            }]
+          },
+          {
+            placeName: 'Petronas Station',
+            picture: "https://cdn.discordapp.com/attachments/303839139554394112/489048032760037376/unknown.png",
+            rating: 4,
+            location: [{
+              lat: 3.047285,
+              lng: 101.689007
+            }]
+          }
         ],
         noPlaceFound: false,
         selectedSearchPlaces: null,
@@ -176,7 +237,8 @@
         text: null,
         id: null,
         setPoints: [],
-        driverLocationInterval: null
+        driverLocationInterval: null,
+        leGmap: null
       }
 
     },
@@ -264,6 +326,7 @@
       this.$store.dispatch('setTypeOfUser', 'Passenger') //Set User as Passenger
       var self = this
       console.log('Client socket has been connected Kappa', this.$socket.id)
+
       //Create the map
       this.createGoogleMaps().then(this.initGoogleMaps, this.googleMapsFailedToLoad)
 
@@ -301,25 +364,22 @@
     },
 
     methods: {
-        //Search for nearby places using keywords
+      //Search for nearby places using keywords
       searchForPlaces() {
-          var x = this.searchByKeywords.toLowerCase();
-          if(x === 'bank') {
-              this.selectedSearchPlaces = this.searchBank
-              this.searchByKeywordsDialog = true
-          }
-          else if(x === 'diner') {
-              this.selectedSearchPlaces = this.searchDiner
-              this.searchByKeywordsDialog = true
-          }
-          else if(x === 'petrol station') {
-              this.selectedSearchPlaces = this.searchPetrolStation
-              this.searchByKeywordsDialog = true
-          }
-          else {
-              this.searchByKeywordsDialog = true
-              this.noPlaceFound = true
-          }
+        var x = this.searchByKeywords.toLowerCase();
+        if (x === 'bank') {
+          this.selectedSearchPlaces = this.searchBank
+          this.searchByKeywordsDialog = true
+        } else if (x === 'diner') {
+          this.selectedSearchPlaces = this.searchDiner
+          this.searchByKeywordsDialog = true
+        } else if (x === 'petrol station') {
+          this.selectedSearchPlaces = this.searchPetrolStation
+          this.searchByKeywordsDialog = true
+        } else {
+          this.searchByKeywordsDialog = true
+          this.noPlaceFound = true
+        }
       },
       passengerHasLoggedOut() {
         if (this.$store.state.passengerLoggedOut) {
@@ -412,15 +472,22 @@
         }, 1000);
       },
       createGoogleMaps() {
-        return new Promise((resolve, reject) => {
-          let gmap = document.createElement('script')
-          gmap.src =
-            "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places,geometry"
-          gmap.type = 'text/javascript'
-          gmap.onload = resolve
-          gmap.onerror = reject
-          document.body.appendChild(gmap)
-        })
+        if (!this.$store.state.loadGoogleMapsAPI) {
+        this.$store.dispatch('setLoadGoogleMapsAPI', true) //If API has already been used, send next request without utilising the API
+          this.leGmap = new Promise((resolve, reject) => {
+            let gmap = document.createElement('script')
+            gmap.src =
+              "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places,geometry"
+            gmap.type = 'text/javascript'
+            gmap.onload = resolve
+            gmap.onerror = reject
+            document.body.appendChild(gmap)
+          })
+          this.$store.dispatch('setGmap', this.leGmap) //If API has already been used, send next request without utilising the API
+          return this.leGmap
+        } else {
+          return this.$store.state.Gmap
+        }
       },
       initGoogleMaps() {
         // You could do this as an easier alternative 
@@ -516,7 +583,7 @@
           }
         })
       },
-      getRoute2(start,end) {
+      getRoute2(start, end) {
         //Clear the pre-existed marker with old map reference
         this.setPoints = []
 
@@ -537,7 +604,7 @@
           travelMode: 'DRIVING'
         }, function (response, status) {
           if (status === 'OK') {
-            vm.searchLocationStatus = true 
+            vm.searchLocationStatus = true
             vm.directionsDisplay.setDirections(response)
             vm.time = response.routes[0].legs[0].duration.text
             vm.theStartAddress = response.routes[0].legs[0].start_address
@@ -556,7 +623,7 @@
             lat: position.coords.latitude,
             lng: position.coords.longitude
           }
-          self.getRoute2(pos,des)
+          self.getRoute2(pos, des)
         });
       }
     },
@@ -588,10 +655,6 @@
     height: 40px;
     padding: 0 0 0 8px;
     margin-right: 4px;
-  }
-
-  .keywordSearch {
-    padding-top: 47px;
   }
 
   @media (min-width: 900px) and (max-width: 2000px) {

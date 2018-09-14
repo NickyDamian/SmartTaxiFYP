@@ -6,8 +6,11 @@
       <v-spacer></v-spacer>
 
       <v-btn icon @click="searchPlaces()">
-      <v-icon>directions</v-icon>
-    </v-btn>
+        <v-icon>directions</v-icon>
+      </v-btn>
+      <v-btn icon @click="callEmergencyContacts()">
+        <v-icon>call</v-icon>
+      </v-btn>
     </v-toolbar>
 
     <v-navigation-drawer v-model="drawer" absolute temporary>
@@ -42,6 +45,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
   export default {
     data() {
       return {
@@ -72,17 +76,16 @@
     },
     methods: {
       searchPlaces() {
-        if(this.searchBox === false) {
+        if (this.searchBox === false) {
           this.$store.dispatch('setSearchForPlaces', true)
           this.searchBox = true
-        }
-        else {
+        } else {
           this.$store.dispatch('setSearchForPlaces', false)
           this.searchBox = false
         }
       },
       navigateTo(route) {
-          this.$router.push(route)
+        this.$router.push(route)
       },
       loggedout(item) {
         if (item === 'login') {
@@ -92,6 +95,9 @@
             this.$store.dispatch('setPassengerLoggedOut', true)
           }
         }
+      },
+      callEmergencyContacts() {
+        // Vue.cordova.CordovaCall.sendCall('Kelf');
       }
     }
   }

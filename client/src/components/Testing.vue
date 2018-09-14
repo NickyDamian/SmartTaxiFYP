@@ -164,7 +164,7 @@
       var self = this
       setInterval(() => {
         self.prepareForLoggedOut()
-      },1000)
+      }, 1000)
     },
     components: {
       Footer,
@@ -185,15 +185,15 @@
         }
       },
       async driverHasLoggedOut() {
-          this.$store.dispatch('setDriverLoggedOut', false) //Remove driver from server and all other passenger client
-          try {
-            const response = await LocationService.deleteLocation({
-              socketID: this.$socket.id
-            })
-          } catch (error) {
-            this.error = error.response.data.error
-          }
-          console.log("Kappa Pride")
+        this.$store.dispatch('setDriverLoggedOut', false) //Remove driver from server and all other passenger client
+        try {
+          const response = await LocationService.deleteLocation({
+            socketID: this.$socket.id
+          })
+        } catch (error) {
+          this.error = error.response.data.error
+        }
+        console.log("Kappa Pride")
       },
       journeyIsCompleted() {
         var self = this
@@ -280,15 +280,22 @@
         }
       },
       createGoogleMaps() {
-        return new Promise((resolve, reject) => {
-          let gmap = document.createElement('script')
-          gmap.src =
-            "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places"
-          gmap.type = 'text/javascript'
-          gmap.onload = resolve
-          gmap.onerror = reject
-          document.body.appendChild(gmap)
-        })
+        if (!this.$store.state.loadGoogleMapsAPI) {
+          this.$store.dispatch('setLoadGoogleMapsAPI', true) //If API has already been used, send next request without utilising the API
+          this.leGmap = new Promise((resolve, reject) => {
+            let gmap = document.createElement('script')
+            gmap.src =
+              "https://maps.googleapis.com/maps/api/js?key=AIzaSyDdMfohmlw-A2h2rUNJsbMc7Afvy3m1zt4&libraries=places,geometry"
+            gmap.type = 'text/javascript'
+            gmap.onload = resolve
+            gmap.onerror = reject
+            document.body.appendChild(gmap)
+          })
+          this.$store.dispatch('setGmap', this.leGmap) //If API has already been used, send next request without utilising the API
+          return this.leGmap
+        } else {
+          return this.$store.state.Gmap
+        }
       },
       initGoogleMaps() {
         // You could do this as an easier alternative 

@@ -10,6 +10,10 @@ import colors from 'vuetify/es5/util/colors'
 import store from './store/store'
 import VueSocketIo from 'vue-socket.io-extended'
 import io from 'socket.io-client'
+import VueCordova from 'vue-cordova'
+
+//Enables vue to use with Cordova plugins
+Vue.use(VueCordova)
 
 //Making socket connection with the server
 Vue.use(VueSocketIo, io('http://localhost:8081'))

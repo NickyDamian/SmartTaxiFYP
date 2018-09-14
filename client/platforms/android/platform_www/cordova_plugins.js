@@ -13,13 +13,31 @@ module.exports = [
     "file": "plugins/cordova-plugin-geolocation/www/PositionError.js",
     "pluginId": "cordova-plugin-geolocation",
     "runs": true
+  },
+  {
+    "id": "cordova-call.CordovaCall",
+    "file": "plugins/cordova-call/www/CordovaCall.js",
+    "pluginId": "cordova-call",
+    "clobbers": [
+      "cordova.plugins.CordovaCall"
+    ]
+  },
+  {
+    "id": "cordova-plugin-device.device",
+    "file": "plugins/cordova-plugin-device/www/device.js",
+    "pluginId": "cordova-plugin-device",
+    "clobbers": [
+      "device"
+    ]
   }
 ];
 module.exports.metadata = 
 // TOP OF METADATA
 {
   "cordova-plugin-whitelist": "1.3.3",
-  "cordova-plugin-geolocation": "4.0.1"
+  "cordova-plugin-geolocation": "4.0.1",
+  "cordova-call": "1.1.6",
+  "cordova-plugin-device": "2.0.2"
 };
 // BOTTOM OF METADATA
 });

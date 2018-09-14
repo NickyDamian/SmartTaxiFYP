@@ -6,6 +6,7 @@ const config = require('./config/config');
 const mongoose = require('mongoose'); //Connect to MongoDb
 const Promise = require('bluebird');
 const socket = require('socket.io');
+const routes = require('./routes')
 
 const app = express();
 app.use(morgan('combined'));
@@ -18,7 +19,7 @@ require('./routes')(app);
 
 //connect to mongoDB
 mongoose.connect('mongodb://localhost/Smart-Taxi');
-mongoose.Promise = Promise;
+mongoose.Promise = Promise
 
 var server = app.listen(config.port);
 console.log(`Server started on port ${config.port}`);
