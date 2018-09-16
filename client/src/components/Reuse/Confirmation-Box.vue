@@ -175,7 +175,7 @@
           }
         }
         console.log(minimum, shortestDistanceDriver)
-        if (minimum < 4.5 || minimum === undefined) {
+        if (minimum < 150 || minimum === undefined) {
           //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
           this.$socket.emit('sendRequest', {
             rideRequest: [this.time, this.money, this.startAddress, this.endAddress, "Nicky", this.distance, this.money],

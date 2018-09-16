@@ -6,13 +6,15 @@ const SALT_WORK_FACTOR = 8;
 
 //Create user Schema and Model
 const UserSchema = new Schema({
+    firstname: {type: String},
+    lastname: {type: String},
+    phonenumber: {type: String},
+    dob: {type: String},
+    typeUser: {type: String},
     email:{
         type: String,
         required: [true, 'Email field is required'],
         unique: true
-    },
-    name:{
-        type: String
     },
     password:{
         type: String,

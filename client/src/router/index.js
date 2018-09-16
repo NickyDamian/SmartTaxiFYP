@@ -5,6 +5,7 @@ import Register from '@/components/Register'
 import Menu from '@/components/Menu'
 import Test from '@/components/Testing'
 import Histories from '@/components/History'
+import Admin from '@/components/Admin'
 
 Vue.use(Router)
 
@@ -34,6 +35,11 @@ export default new Router({
       path: '/history',
       name: 'history',
       component: Histories
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: Admin
     }
   ]
 })

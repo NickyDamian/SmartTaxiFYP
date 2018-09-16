@@ -5,19 +5,32 @@
 </template>
 
 <script>
-import Vue from 'vue'
+  import Vue from 'vue'
+  var deviceReady = false
   export default {
     name: 'App',
     mounted() {
-      console.log("AAAAAAAAAAAAAAAAAAA")
-      console.log(Vue.cordova)
-      Vue.cordova.on('deviceready', () => {
-          console.log("Ola Amigos")
-          alert("Don KappaPride")
-        });
+      // document.addEventListener('deviceReady', () => {
+      //   console.log("Kelf Kappa Pride")
+      //   deviceReady = true
+      // }, false)
+      // console.log("AAAAAAAAAAAAAAAAAAA")
+      // console.log(Vue.cordova)
+      // Vue.cordova.on('deviceready', () => {
+      //     console.log("Ola Amigos")
+      //     alert("Don KappaPride")
+      // });
+      // if (deviceReady) {
+      //   console.log("Cordova Succ")
+      // } else {
+      //   console.log("Cordova Rocks")
+      // }
     }
   }
-
+// document.addEventListener('deviceReady', () => {
+//   console.log("Don Kappa Pride")
+//         deviceReady = true
+// }, false)
 </script>
 
 <style>

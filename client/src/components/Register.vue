@@ -27,18 +27,18 @@
             <v-container grid-list-xl>
               <v-layout v-bind="binding">
                 <v-flex>
-                  <v-text-field :rules="rules.nameRules" hint="Ensure it is not empty." prepend-icon="person" label="First Name" v-model="firstName"
-                    color="accent"></v-text-field>
+                  <v-text-field :rules="rules.nameRules" hint="Ensure it is not empty." prepend-icon="person" label="First Name"
+                    v-model="firstName" color="accent"></v-text-field>
                 </v-flex>
                 <v-flex>
-                  <v-text-field :rules="rules.nameRules" hint="Ensure it is not empty." prepend-icon="person" label="Last Name" v-model="lastName"
-                    color="accent"></v-text-field>
+                  <v-text-field :rules="rules.nameRules" hint="Ensure it is not empty." prepend-icon="person" label="Last Name"
+                    v-model="lastName" color="accent"></v-text-field>
                 </v-flex>
               </v-layout>
               <v-layout v-bind="binding">
                 <v-flex>
-                  <v-text-field :rules="rules.phoneRules" hint="Ensure it is a valid Malaysian phone number." prepend-icon="phone" label="Phone Number"
-                    v-model="phoneNumber" color="accent"></v-text-field>
+                  <v-text-field :rules="rules.phoneRules" hint="Ensure it is a valid Malaysian phone number."
+                    prepend-icon="phone" label="Phone Number" v-model="phoneNumber" color="accent"></v-text-field>
                 </v-flex>
                 <v-flex>
                   <v-text-field :rules="rules.dobRules" prepend-icon="cake" hint="Ensure it is in the format of day/month/year. eg. 01/11/2001"
@@ -75,14 +75,14 @@
               </v-layout>
               <v-layout v-bind="binding">
                 <v-flex>
-                  <v-text-field :rules="rules.passwordRules" :append-icon="showPass ? 'visibility_off' : 'visibility'" :type="showPass ? 'showPass' : 'password'"
-                    prepend-icon="vpn_key" hint="Password should be at least 8 characters with alphabets and numerics." label="Password"
-                    v-model="password" color="accent" @click:append="showPass = !showPass"></v-text-field>
+                  <v-text-field :rules="rules.passwordRules" :append-icon="showPass ? 'visibility_off' : 'visibility'"
+                    :type="showPass ? 'showPass' : 'password'" prepend-icon="vpn_key" hint="Password should be at least 8 characters with alphabets and numerics."
+                    label="Password" v-model="password" color="accent" @click:append="showPass = !showPass"></v-text-field>
                 </v-flex>
                 <v-flex>
-                  <v-text-field :rules="rules.secondPasswordRules" :append-icon="showPass ? 'visibility_off' : 'visibility'" :type="showPass ? 'showPass' : 'password'"
-                    hint="Ensure it matches your first password." prepend-icon="lock" label="Confirm Password" v-model="secondPassword"
-                    color="accent" @click:append="showPass = !showPass"></v-text-field>
+                  <v-text-field :rules="rules.secondPasswordRules" :append-icon="showPass ? 'visibility_off' : 'visibility'"
+                    :type="showPass ? 'showPass' : 'password'" hint="Ensure it matches your first password."
+                    prepend-icon="lock" label="Confirm Password" v-model="secondPassword" color="accent" @click:append="showPass = !showPass"></v-text-field>
                 </v-flex>
               </v-layout>
             </v-container>
@@ -103,7 +103,8 @@
           <v-flex xs12 sm6 offset-sm3>
             <v-card>
               <v-list three-line>
-                <p class="subheading font-weight-bold confirmation-title">Please ensure all your details are correct before proceeding.</p>
+                <p class="subheading font-weight-bold confirmation-title">Please ensure all your details are correct
+                  before proceeding.</p>
                 <!--Email-->
                 <v-divider :inset="true">
                 </v-divider>
@@ -202,7 +203,7 @@
             </v-card>
           </v-flex>
         </v-layout>
-        <v-btn color="primary" @click="dialog = true">Continue</v-btn>
+        <v-btn color="primary" @click="register()">Register</v-btn>
         <v-btn flat @click="e6 = 2">Back</v-btn>
       </v-stepper-content>
     </v-stepper>
@@ -214,7 +215,8 @@
         </v-card-title>
 
         <v-card-text>
-          Thank you for registering with Smart Taxi application. We will now redirect you the login page for you to sign in and start
+          Thank you for registering with Smart Taxi application. We will now redirect you the login page for you to
+          sign in and start
           using the application. We hope that we have made your transportation process a much more pleasurable one :3
         </v-card-text>
 
@@ -228,10 +230,18 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
+      :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
+      {{ text }}
+      <v-btn color="red" flat @click="snackbar = false">
+        Close
+      </v-btn>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script>
+  import AuthenticationService from '@/services/AuthenticationService'
   export default {
     data() {
       return {
@@ -252,6 +262,14 @@
         emailAddress: '',
         password: '',
         secondPassword: '',
+        snackbar: false,
+        timeout: 6000,
+        text: "Email already exists. Please Try Again!",
+        snackbar: false,
+        y: 'top',
+        x: null,
+        mode: '',
+        timeout: 6000,
         rules: {
           firstNameMatch: () => ('The first name you entered is invalid.'),
           nameRules: [
@@ -295,16 +313,23 @@
       }
     },
     methods: {
-      // async register () {
-      //   try {
-      //     await AuthenticationService.register({
-      //       email: this.email,
-      //       password: this.password
-      //     })
-      //   } catch (error) {
-      //     this.error = error.response.data.error
-      //   }
-      // },
+      async register() {
+        try {
+          await AuthenticationService.register({
+            email: this.emailAddress,
+            password: this.password,
+            firstname: this.firstName,
+            lastname: this.lastName,
+            phonenumber: this.phoneNumber,
+            dob: this.dateOfBirth,
+            typeUser: this.select
+          })
+          this.dialog = true
+        } catch (error) {
+          console.log(error)
+          this.snackbar = true
+        }
+      },
       navigateTo(route) {
         this.$router.push(route)
       },
@@ -323,7 +348,7 @@
           this.lastName = '',
           this.phoneNumber = '',
           this.dateOfBirth = ''
-          this.select = 'Passenger'
+        this.select = 'Passenger'
       },
       clear2() {
         this.emailAddress = '',

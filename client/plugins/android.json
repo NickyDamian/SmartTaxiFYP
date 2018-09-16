@@ -7,16 +7,16 @@
     "files": {}
   },
   "installed_plugins": {
-    "cordova-plugin-whitelist": {
+    "cordova-call": {
+      "PACKAGE_NAME": "com.f1lt3r.client"
+    },
+    "cordova-plugin-device": {
       "PACKAGE_NAME": "com.f1lt3r.client"
     },
     "cordova-plugin-geolocation": {
       "PACKAGE_NAME": "com.f1lt3r.client"
     },
-    "cordova-call": {
-      "PACKAGE_NAME": "com.f1lt3r.client"
-    },
-    "cordova-plugin-device": {
+    "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "com.f1lt3r.client"
     }
   },

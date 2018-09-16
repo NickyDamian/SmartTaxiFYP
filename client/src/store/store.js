@@ -22,8 +22,8 @@ export default new Vuex.Store({
         displayJourneyCompletedForPassenger: false, //Allow passenger to provide their feeback once journey has been completed
         commentForPassenger: null, //Display the additional note the passenger has written when driver accepted request
         journeyCompleted: null, //State when the journey is completed
-        clientName: 'Nicholas Damian',
-        clientEmailAddress: 'nicky@gmail.com',
+        clientName: null,
+        clientEmailAddress: null,
         driverLoggedOut: false, //State when driver logs out of app (delete driver from server and inform all other passenger app)
         passengerLoggedOut: false, //State when passenger logs out of app
         token: true,
@@ -93,6 +93,15 @@ export default new Vuex.Store({
         },
         setSearchForPlaces (state, searchForPlaces){
             state.searchForPlaces = searchForPlaces
+        },
+        setSearchForPlaces (state, searchForPlaces){
+            state.searchForPlaces = searchForPlaces
+        },
+        setName (state, clientName){
+            state.clientName = clientName
+        },
+        setEmail (state, clientEmailAddress){
+            state.clientEmailAddress = clientEmailAddress
         }
     },
     actions: {
@@ -155,6 +164,12 @@ export default new Vuex.Store({
         },
         setSearchForPlaces ({commit}, searchForPlaces) {
             commit('setSearchForPlaces', searchForPlaces)
-        }
+        },
+        setName ({commit}, clientName) {
+            commit('setName', clientName)
+        },
+        setEmail ({commit}, clientEmailAddress) {
+            commit('setEmail', clientEmailAddress)
+        },
     }
 })

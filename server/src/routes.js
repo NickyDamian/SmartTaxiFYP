@@ -5,14 +5,26 @@ const PassengerFeedbackController = require('./controllers/PassengerFeedbackCont
 const PassengerCancelRequest = require('./controllers/PassengerCancelRequestController')
 const DriverLocationController = require('./controllers/LocationController')
 const HistoryController = require('./controllers/HistoryController')
+const PriceController = require('./controllers/PriceController')
 
 module.exports = (app) => {
-    app.post('/register', //middleway function to authenticate
-        AuthenticationControllerPolicy.register, //express middleware to check inputs before passing it to controller
+    app.get('/index', //middleway function to get current fare
+        PriceController.index)
+
+    app.post('/post', //middleway function to update current fare
+        PriceController.post)
+
+    app.post('/register', //middleway function to authenticate //express middleware to check inputs before passing it to controller
         AuthenticationController.register)
 
     app.post('/login', //middleway function to authenticate user credentials
         AuthenticationController.login)
+
+    app.post('/findDetails', //middleway function to find user details
+        AuthenticationController.findDetails)
+
+    app.post('/updateDetails', //middleway function to update user details
+        AuthenticationController.updateDetails)
 
     app.post('/location', //middleway function to save driver location
         DriverLocationController.saveLocation)

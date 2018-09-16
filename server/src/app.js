@@ -6,7 +6,6 @@ const config = require('./config/config');
 const mongoose = require('mongoose'); //Connect to MongoDb
 const Promise = require('bluebird');
 const socket = require('socket.io');
-const routes = require('./routes')
 
 const app = express();
 app.use(morgan('combined'));

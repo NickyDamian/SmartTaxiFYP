@@ -16,6 +16,7 @@ import VueCordova from 'vue-cordova'
 Vue.use(VueCordova)
 
 //Making socket connection with the server
+//Vue.use(VueSocketIo, io('https://7f92eab6.ngrok.io'))
 Vue.use(VueSocketIo, io('http://localhost:8081'))
 
 //The google maps api
