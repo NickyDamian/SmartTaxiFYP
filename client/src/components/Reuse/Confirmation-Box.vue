@@ -178,7 +178,7 @@
         if (minimum < 150 || minimum === undefined) {
           //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
           this.$socket.emit('sendRequest', {
-            rideRequest: [this.time, this.money, this.startAddress, this.endAddress, "Nicky", this.distance, this.money],
+            rideRequest: [this.time, this.money, this.startAddress, this.endAddress, this.$store.state.clientName, this.distance, this.money, this.$store.state.clientEmailAddress],
             driverId: shortestDistanceDriver[1],
             passengerId: this.$socket.id,
             startLocation: this.startLocation,

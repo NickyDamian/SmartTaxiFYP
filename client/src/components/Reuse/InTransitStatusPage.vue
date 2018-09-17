@@ -263,7 +263,9 @@
     },
     props: [
       'passengerID',
+      'passengerEmailAddress',
       'driverID',
+      'driverEmailAddress',
       'comment',
       'rideActuallyCompleted',
       'startAddress',
@@ -276,7 +278,7 @@
       async saveHistory() {
         try {
           var historyRequest = await HistoryService.saveHistory({
-            email: "Kelf@gmail.com",
+            email: this.$store.state.clientEmailAddress,
             rideInfo: [{
               startAddress: this.startAddress,
               endAddress: this.endAddress,
@@ -293,7 +295,7 @@
         if (this.$store.state.typeOfUser == 'Passenger') {
           try {
             const response = await FeedbackService.savePassengerFeedback({
-              driverID: "Nicky",
+              driverID: this.driverEmailAddress,
               feedbacks: [{
                 rating: this.rating,
                 comment: this.feedback
@@ -305,7 +307,7 @@
         } else {
           try {
             const response = await FeedbackService.saveDriverFeedback({
-              passengerID: "KappaDon",
+              passengerID: this.passengerEmailAddress,
               feedbacks: [{
                 rating: this.rating,
                 comment: this.feedback
@@ -317,9 +319,9 @@
           if (this.rating < 3) {
             try {
               const response = await FeedbackService.saveBadRequest({
-                passengerID: "KappaDon",
+                passengerID: this.passengerEmailAddress,
                 feedbacks: [{
-                  driverName: "Jeff",
+                  driverName: this.$store.state.clientEmailAddress,
                   comment: this.feedback
                 }]
               })

@@ -1,7 +1,7 @@
 <template>
-  <v-app v-show="$store.state.token">
-    <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
-    <div v-if="!$store.state.rideInfo && !rideInfo">
+  <v-app>
+    <SideNavigation v-if="!$store.state.rideInfo && $store.state.submenuPage === null"></SideNavigation>
+    <div v-show="(!$store.state.rideInfo && !rideInfo) && $store.state.submenuPage === null">
       <div class="start-location">
         <v-icon color="blue" class="pl-2">map</v-icon>
         <input class="search-box" @click="autoComplete" id="pac-input" type="text" placeholder="Starting location">
@@ -12,25 +12,26 @@
         <input class="search-box" @click="autoComplete2" id="pac-input2" type="text" placeholder="I'm going to...">
       </div>
     </div>
-    <v-toolbar v-if="!$store.state.rideInfo && !rideInfo && $store.state.searchForPlaces" class="keywordSearch">
+    <v-toolbar v-if="(!$store.state.rideInfo && !rideInfo && $store.state.searchForPlaces) && $store.state.submenuPage === null" class="keywordSearch">
       <v-text-field hide-details prepend-icon="home" single-line label="Search" v-model="searchByKeywords"></v-text-field>
       <v-btn icon @click="searchForPlaces()">
         <v-icon>search</v-icon>
       </v-btn>
     </v-toolbar>
-    <div style="height:100%;width:100%" id="map"></div>
-    <v-btn v-if="!$store.state.MenuConfirmation && !rideInfo" color="primary" @click="findDriver">
+    <div v-show="$store.state.submenuPage === null" style="height:100%;width:100%" id="map"></div>
+    <v-btn v-if="(!$store.state.MenuConfirmation && !rideInfo) && $store.state.submenuPage === null" color="primary" @click="findDriver">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn>
-    <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
+    <v-btn v-if="(!$store.state.rideInfo && rideInfo) && $store.state.submenuPage === null" color="primary" @click="$store.dispatch('setRideInfo', true)">
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
-    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation" :time='this.time' :startAddress='this.theStartAddress'
+    <ConfirmationDialogBox v-if="$store.state.MenuConfirmation && $store.state.submenuPage === null" :time='this.time' :startAddress='this.theStartAddress'
       :endAddress='this.theEndAddress' :money='this.money' :data='this.setPoints' :start='this.start' :end='this.end'
       :distance='this.distance'></ConfirmationDialogBox>
-    <RideInfo v-if="$store.state.rideInfo" :driverID='this.driverID' :clientName='this.driverName'
+    <RideInfo v-if="$store.state.rideInfo && $store.state.submenuPage === null" :driverID='this.driverID' :clientName='this.driverName'
       :rideActuallyCompleted='this.rideActuallyCompleted' :startAddress='this.theStartAddress' :endAddress='this.theEndAddress'
-      :money='this.money'></RideInfo>
+      :money='this.money' :driverEmailAddress='this.driverEmailAddress'></RideInfo>
+      <History v-if="$store.state.submenuPage === 'history'"></History>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -99,6 +100,7 @@
 </template>
 
 <script>
+import History from './Reuse/History.vue'
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
@@ -113,6 +115,7 @@
   export default {
     data() {
       return {
+        driverEmailAddress: null,
         searchBank: [{
             placeName: 'Maybank',
             picture: "https://cdn.discordapp.com/attachments/303839139554394112/489023427546710016/Maybank.png",
@@ -274,6 +277,7 @@
         if (data.message == 'Accepted') {
           this.driverID = data.driverId
           this.driverName = data.driverName
+          this.driverEmailAddress = data.driverEmailAddress
           this.rideInfo = true //Show the ride info if driver accept the ride request
           this.setPoints = [] //Clear all the available driver markers
           this.searchLocationStatus = false
@@ -360,7 +364,8 @@
       Footer,
       SideNavigation,
       ConfirmationDialogBox,
-      RideInfo
+      RideInfo,
+      History
     },
 
     methods: {

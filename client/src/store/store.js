@@ -6,6 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
+        submenuPage: null,
         loadGoogleMapsAPI: false, //Call the script only once
         Gmap: null, //Promise request to create the Gmap
         stopThePassengerInterval: false, //Once request is sent, stop the interval
@@ -31,6 +32,9 @@ export default new Vuex.Store({
     }, //keeping track of changes
 
     mutations: {
+        setSubmenuPage (state, submenuPage){
+            state.submenuPage = submenuPage
+        },
         setLoadGoogleMapsAPI (state, loadGoogleMapsAPI){
             state.loadGoogleMapsAPI = loadGoogleMapsAPI
         },
@@ -105,6 +109,9 @@ export default new Vuex.Store({
         }
     },
     actions: {
+        setSubmenuPage ({commit}, submenuPage) {
+            commit('setSubmenuPage', submenuPage) //do async calls/logic
+        },
         setLoadGoogleMapsAPI ({commit}, loadGoogleMapsAPI) {
             commit('setLoadGoogleMapsAPI', loadGoogleMapsAPI) //do async calls/logic
         },

@@ -5,7 +5,7 @@
       <v-toolbar-title>Smart Taxi</v-toolbar-title>
       <v-spacer></v-spacer>
 
-      <v-btn icon @click="searchPlaces()">
+      <v-btn icon v-if="$store.state.typeOfUser === 'Passenger'" @click="searchPlaces()">
         <v-icon>directions</v-icon>
       </v-btn>
       <v-btn icon @click="callEmergencyContacts()">
@@ -29,7 +29,7 @@
       <v-list class="pt-0" dense>
         <v-divider></v-divider>
 
-        <v-list-tile v-for="item in items" :key="item.title" @click="navigateTo({name: item.link}), loggedout(item.link)">
+        <v-list-tile v-for="item in items" :key="item.title" @click="loggedout(item.link), changePage(item.link)">
           <v-list-tile-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-tile-action>
@@ -84,16 +84,20 @@ import Vue from 'vue'
           this.searchBox = false
         }
       },
-      navigateTo(route) {
-        this.$router.push(route)
-      },
       loggedout(item) {
         if (item === 'login') {
           if (this.$store.state.typeOfUser === 'Driver') {
-            this.$store.dispatch('setDriverLoggedOut', true) //Remove driver from server and all other passenger client
+            this.$store.dispatch('setDriverLoggedOut', true) //Remove driver from server and all other passenger client\
+            this.$router.push({name: 'login'})
           } else {
             this.$store.dispatch('setPassengerLoggedOut', true)
+            this.$router.push({name: 'login'})
           }
+        }
+      },
+      changePage(item) {
+        if (item != 'login') {
+          this.$store.dispatch('setSubmenuPage', item)
         }
       },
       callEmergencyContacts() {

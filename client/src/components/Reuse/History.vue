@@ -4,7 +4,9 @@
       <v-flex xs12 sm6 offset-sm3>
         <v-card>
           <v-toolbar color="primary" dark>
+            <v-btn icon dark @click.native="$store.dispatch('setSubmenuPage', null)">
             <v-icon>close</v-icon>
+            </v-btn>
             <v-toolbar-title>History</v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
@@ -44,7 +46,7 @@
 
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" flat @click="dialog = false, $router.push({name: 'login'})">
+              <v-btn color="primary" flat @click="dialog = false, $store.dispatch('setSubmenuPage', null)">
                 Go Back
               </v-btn>
             </v-card-actions>
@@ -71,7 +73,7 @@
       async getHistory() {
         try {
           var historyRequest = await HistoryService.getHistory({
-            email: "Kelf@gmail.com"
+            email: this.$store.state.clientEmailAddress
           })
         } catch (error) {
           this.error = error.response.data.error

@@ -9,9 +9,9 @@
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
     <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.theEndAddress'
-      :money='this.money' :passengerID='this.passengerID'></DriverConfirmationDialogBox>
+      :money='this.money' :passengerID='this.passengerID' :passengerEmailAddress='this.passengerEmailAddress'></DriverConfirmationDialogBox>
     <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :clientName='this.passengerName' :comment='this.comment'
-      :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money"></RideInfo>
+      :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money" :passengerEmailAddress='this.passengerEmailAddress'></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -58,6 +58,7 @@
   export default {
     data() {
       return {
+        passengerEmailAddress: null,
         comment: '',
         notifyPassengerDialog: false,
         passengerMessage: null,
@@ -120,6 +121,7 @@
         this.passengerName = data.rideRequest[4]
         this.distance = data.rideRequest[5]
         this.money = data.rideRequest[6]
+        this.passengerEmailAddress = data.rideRequest[7]
         this.passengerID = data.passengerId
         this.start = data.startLocation
         this.end = data.endLocation

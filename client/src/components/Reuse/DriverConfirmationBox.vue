@@ -38,7 +38,7 @@
         </v-flex>
       </v-card>
       <v-dialog v-model="passengerBadRequestDialog" fullscreen persistent>
-        <v-card>
+        <v-card v-if="badrequests != null">
           <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
             Bad Requests?
           </v-card-title>
@@ -54,6 +54,20 @@
             </template>
             <v-divider></v-divider>
           </v-list>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" @click="passengerBadRequestDialog = false">
+              Okay
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+        <v-card v-if="badrequests === null">
+          <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+            Bad Requests?
+          </v-card-title>
+          <v-card-text>
+          It seems that this passenger does not have any bad requests!
+        </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="primary" @click="passengerBadRequestDialog = false">
@@ -85,7 +99,8 @@
       'time',
       'address',
       'money',
-      'passengerID'
+      'passengerID',
+      'passengerEmailAddress'
     ],
     mounted() {
       // console.log(this.data[0][1])
@@ -97,7 +112,7 @@
       async getBadRequests() {
         try {
           const badRating = await FeedbackService.getBadRequest({
-            passengerID: "KappaDon"
+            passengerID: this.passengerEmailAddress
           })
           this.badrequests = badRating.data.rating.feedbacks
         } catch (error) {
@@ -116,7 +131,8 @@
           message: "Accepted",
           passengerId: this.passengerId,
           driverId: this.$socket.id,
-          driverName: 'Don'
+          driverName: this.$store.state.clientName,
+          driverEmailAddress: this.$store.state.clientEmailAddress
         })
 
         this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
