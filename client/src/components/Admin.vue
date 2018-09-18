@@ -213,10 +213,11 @@ import PriceService from '@/services/PriceService'
         async getPrice() {
             try {
           var request = await PriceService.index()
-          x = (request.data.price/100).toFixed(2)
-          this.price = request.data.price
+          var x = (request.data.price/100).toFixed(2)
+          this.price = x
         } catch (error) {
           this.error = error
+          console.log(error)
         }
         },
         async updatePrice() {

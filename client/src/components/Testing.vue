@@ -9,7 +9,7 @@
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
     <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.theEndAddress'
-      :money='this.money' :passengerID='this.passengerID' :passengerEmailAddress='this.passengerEmailAddress'></DriverConfirmationDialogBox>
+      :money='this.money' :passengerID='this.passengerID' :passengerEmailAddress='this.passengerEmailAddress' :driverRate='this.driverRate'></DriverConfirmationDialogBox>
     <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :clientName='this.passengerName' :comment='this.comment'
       :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money" :passengerEmailAddress='this.passengerEmailAddress'></RideInfo>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
@@ -48,6 +48,7 @@
   import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
   import RideInfo from './Reuse/InTransitStatusPage.vue'
   import LocationService from '@/services/LocationService'
+  import CancelRate from '@/services/CancelRateService'
   var lat1 = 3.0580092
   var lng1 = 101.7011474
   var point = {
@@ -58,6 +59,7 @@
   export default {
     data() {
       return {
+        driverRate: null,
         passengerEmailAddress: null,
         comment: '',
         notifyPassengerDialog: false,
@@ -114,6 +116,7 @@
       },
       //Listen for event on any driver-location messagefrom the server
       sendRequest(data) {
+        this.getDriverRate()
         this.time = data.rideRequest[0]
         this.money = data.rideRequest[1]
         this.theStartAddress = data.rideRequest[2]
@@ -175,6 +178,17 @@
       RideInfo
     },
     methods: {
+      async getDriverRate() {
+        try {
+          var request = await CancelRate.getRate({
+              email: this.$store.state.clientEmailAddress
+            })
+        } catch (error) {
+          console.log(error)
+        }
+        this.driverRate = request.data
+        console.log(this.driverRate, "Kappa Pride OOOOOOOO")
+      },
       prepareForLoggedOut() {
         if (this.$store.state.driverLoggedOut) {
           this.$store.dispatch('setDriverLoggedOut', false)

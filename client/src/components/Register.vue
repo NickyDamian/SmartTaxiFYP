@@ -203,7 +203,7 @@
             </v-card>
           </v-flex>
         </v-layout>
-        <v-btn color="primary" @click="register()">Register</v-btn>
+        <v-btn color="primary" @click="register(),updateDriverRate()">Register</v-btn>
         <v-btn flat @click="e6 = 2">Back</v-btn>
       </v-stepper-content>
     </v-stepper>
@@ -242,6 +242,7 @@
 
 <script>
   import AuthenticationService from '@/services/AuthenticationService'
+  import CancelRate from '@/services/CancelRateService'
   export default {
     data() {
       return {
@@ -313,6 +314,19 @@
       }
     },
     methods: {
+      async updateDriverRate() {
+        if(this.select === "Driver"){
+          try {
+          var request = await CancelRate.saveRate({
+              email: this.emailAddress,
+              totalRides: 0,
+              cancelled: 0
+            })
+        } catch (error) {
+          console.log(error)
+        }
+        }     
+      },
       async register() {
         try {
           await AuthenticationService.register({

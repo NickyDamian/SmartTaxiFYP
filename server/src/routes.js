@@ -6,8 +6,15 @@ const PassengerCancelRequest = require('./controllers/PassengerCancelRequestCont
 const DriverLocationController = require('./controllers/LocationController')
 const HistoryController = require('./controllers/HistoryController')
 const PriceController = require('./controllers/PriceController')
+const CancellationRateController = require('./controllers/CancellationController')
 
 module.exports = (app) => {
+    app.post('/getCancelRate', //middleway function to get driver's acceptance rate
+        CancellationRateController.get)
+
+    app.post('/postCancelRate', //middleway function to update driver's acceptance rate
+        CancellationRateController.save)
+
     app.get('/index', //middleway function to get current fare
         PriceController.index)
 

@@ -6,6 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
+        driverRate: null, //Current cancellation rate of the driver
         submenuPage: null,
         loadGoogleMapsAPI: false, //Call the script only once
         Gmap: null, //Promise request to create the Gmap
@@ -32,6 +33,9 @@ export default new Vuex.Store({
     }, //keeping track of changes
 
     mutations: {
+        setDriverRate (state, driverRate){
+            state.driverRate = driverRate
+        },
         setSubmenuPage (state, submenuPage){
             state.submenuPage = submenuPage
         },
@@ -109,6 +113,9 @@ export default new Vuex.Store({
         }
     },
     actions: {
+        setDriverRate ({commit}, driverRate) {
+            commit('setDriverRate', driverRate) //do async calls/logic
+        },
         setSubmenuPage ({commit}, submenuPage) {
             commit('setSubmenuPage', submenuPage) //do async calls/logic
         },

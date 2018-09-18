@@ -28,7 +28,7 @@
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation && $store.state.submenuPage === null" :time='this.time' :startAddress='this.theStartAddress'
       :endAddress='this.theEndAddress' :money='this.money' :data='this.setPoints' :start='this.start' :end='this.end'
       :distance='this.distance'></ConfirmationDialogBox>
-    <RideInfo v-if="$store.state.rideInfo && $store.state.submenuPage === null" :driverID='this.driverID' :clientName='this.driverName'
+    <RideInfo v-show="$store.state.rideInfo && $store.state.submenuPage === null" :driverID='this.driverID' :clientName='this.driverName'
       :rideActuallyCompleted='this.rideActuallyCompleted' :startAddress='this.theStartAddress' :endAddress='this.theEndAddress'
       :money='this.money' :driverEmailAddress='this.driverEmailAddress'></RideInfo>
       <History v-if="$store.state.submenuPage === 'history'"></History>
@@ -106,6 +106,7 @@ import History from './Reuse/History.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
   import RideInfo from './Reuse/InTransitStatusPage.vue'
   import LocationService from '@/services/LocationService'
+  import PriceService from '@/services/PriceService'
 
   var getStartPlace
   var getEndPlace
@@ -115,7 +116,10 @@ import History from './Reuse/History.vue'
   export default {
     data() {
       return {
+        place1: getStartPlace,
+        place2: getEndPlace,
         driverEmailAddress: null,
+        currentFareRate: null,
         searchBank: [{
             placeName: 'Maybank',
             picture: "https://cdn.discordapp.com/attachments/303839139554394112/489023427546710016/Maybank.png",
@@ -272,7 +276,7 @@ import History from './Reuse/History.vue'
       //request Status is triggered when driver accepts or declines the request
       requestStatus(data) {
         this.$store.dispatch('setMenuConfirmation', false) //Hide confirm ride booking box
-
+        console.log("Kelf and Don kappa pride")
         //Delete the driver from the marker array since driver is no longer available
         if (data.message == 'Accepted') {
           this.driverID = data.driverId
@@ -358,6 +362,9 @@ import History from './Reuse/History.vue'
       setInterval(() => {
         self.passengerHasLoggedOut()
       }, 1000)
+
+      //Get current fare rate
+      this.getCurrentFareRate()
     },
 
     components: {
@@ -369,6 +376,15 @@ import History from './Reuse/History.vue'
     },
 
     methods: {
+      async getCurrentFareRate() {
+        try {
+          var request = await PriceService.index()
+          var x = (request.data.price/100).toFixed(2)
+          this.currentFareRate = x
+        } catch (error) {
+          console.log(error)
+        }
+      },
       //Search for nearby places using keywords
       searchForPlaces() {
         var x = this.searchByKeywords.toLowerCase();
@@ -581,7 +597,7 @@ import History from './Reuse/History.vue'
             vm.time = response.routes[0].legs[0].duration.text
             vm.theStartAddress = response.routes[0].legs[0].start_address
             vm.theEndAddress = response.routes[0].legs[0].end_address
-            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * 1).toFixed(2)
+            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * vm.currentFareRate).toFixed(2)
             vm.distance = (response.routes[0].legs[0].distance.value / 1000).toFixed(2)
           } else {
             console.log('Directions request failed due to ' + status)

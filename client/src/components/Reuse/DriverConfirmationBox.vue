@@ -3,7 +3,7 @@
     <div v-if="$store.state.DriverMenuConfirmation">
       <v-card class="borderRadiusDialog">
         <v-toolbar dark color="primary">
-          <v-btn icon dark @click.native="confirmationBoxDisplay(),declineRequest()">
+          <v-btn icon dark @click.native="declineRequest()">
             <v-icon>close</v-icon>
           </v-btn>
           <v-toolbar-title>Ride Request</v-toolbar-title>
@@ -76,6 +76,26 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <v-dialog v-model="driverRateDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Smart Taxi
+        </v-card-title>
+
+        <v-card-text>
+          Unfortunately your cancellation rate is above 10%. We cannot allow your cancellation rate to be avove 10 % of your total reques.
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="driverRateDialog = false">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     </div>
   </div>
 </template>
@@ -83,9 +103,11 @@
 <script>
   import LocationService from '@/services/LocationService'
   import FeedbackService from '@/services/FeedbackService'
+  import CancelRate from '@/services/CancelRateService'
   export default {
     data() {
       return {
+        driverRateDialog: false,
         badrequests: null,
         passengerBadRequestDialog: false,
         dialog: true,
@@ -100,7 +122,8 @@
       'address',
       'money',
       'passengerID',
-      'passengerEmailAddress'
+      'passengerEmailAddress',
+      'driverRate'
     ],
     mounted() {
       // console.log(this.data[0][1])
@@ -134,15 +157,35 @@
           driverName: this.$store.state.clientName,
           driverEmailAddress: this.$store.state.clientEmailAddress
         })
-
+        this.$store.dispatch('setDriverRate', this.driverRate) //Stop interval function when driver accept request 
         this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
         this.deleteDriverFromServer() //Delete driver location from available driver collection
       },
       declineRequest() {
-        this.$socket.emit('requestStatus', {
+          var x = (parseInt(this.driverRate.cancelled) / parseInt(this.driverRate.totalRides) * 100)
+          if (x > 10) {
+            this.driverRateDialog = true
+          } else {
+            this.confirmationBoxDisplay()
+            this.updateDriverRate()
+            this.$socket.emit('requestStatus', {
           message: "Declined",
           passengerId: this.passengerId
         })
+          }
+        
+      },
+      async updateDriverRate() {
+        try {
+          var addOne = (parseInt(this.driverRate.cancelled) + 1)
+          var request = await CancelRate.saveRate({
+              email: this.$store.state.clientEmailAddress,
+              totalRides: (parseInt(this.driverRate.totalRides) + 1),
+              cancelled: addOne
+            })
+        } catch (error) {
+          console.log(error)
+        }
       },
       async deleteDriverFromServer() {
         try {
