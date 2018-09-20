@@ -1,11 +1,11 @@
 <template>
   <v-layout>
     <v-toolbar color="primary" dark fixed>
-      <v-toolbar-side-icon @click.stop="drawer = !drawer"></v-toolbar-side-icon>
+      <v-toolbar-side-icon v-if='!$store.state.rideInfo' @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>Smart Taxi</v-toolbar-title>
       <v-spacer></v-spacer>
 
-      <v-btn icon v-if="$store.state.typeOfUser === 'Passenger'" @click="searchPlaces()">
+      <v-btn icon v-if="$store.state.typeOfUser === 'Passenger' && !$store.state.rideInfo" @click="searchPlaces()">
         <v-icon>directions</v-icon>
       </v-btn>
       <v-btn icon @click="callEmergencyContacts()">
@@ -21,7 +21,7 @@
           </v-list-tile-avatar>
 
           <v-list-tile-content>
-            <v-list-tile-title @click="navigateTo({name: 'login'})">Donny Boy</v-list-tile-title>
+            <v-list-tile-title @click="navigateTo({name: 'login'})">{{this.$store.state.clientName}}</v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
       </v-list>
@@ -57,14 +57,19 @@ import Vue from 'vue'
             link: 'history'
           },
           {
-            title: 'Search',
-            icon: 'search',
-            link: 'search'
+            title: 'Profile',
+            icon: 'person',
+            link: 'profile'
           },
           {
-            title: 'Feedback',
-            icon: 'feedback',
-            link: 'test'
+            title: 'Demand Area',
+            icon: 'drive_eta',
+            link: 'demandArea'
+          },
+          {
+            title: 'Pick Ups',
+            icon: 'pin_drop',
+            link: 'pickups'
           },
           {
             title: 'Sign Out',

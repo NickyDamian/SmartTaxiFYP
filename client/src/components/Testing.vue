@@ -1,17 +1,19 @@
 <template>
   <v-app>
-    <SideNavigation v-if="!$store.state.rideInfo"></SideNavigation>
-    <div style="height:100%;width:100%" id="map"></div>
+    <SideNavigation v-if="!$store.state.rideInfo && $store.state.submenuPage === null"></SideNavigation>
+    <div v-show="$store.state.submenuPage === null" style="height:100%;width:100%" id="map"></div>
     <!-- <v-btn v-if="!$store.state.MenuConfirmation" color="primary" @click="getTrackingLocation">
       <v-icon class="pr-2">directions_car</v-icon> Find Driver
     </v-btn> -->
-    <v-btn v-if="!$store.state.rideInfo && rideInfo" color="primary" @click="$store.dispatch('setRideInfo', true)">
+    <v-btn v-if="(!$store.state.rideInfo && rideInfo) && $store.state.submenuPage === null" color="primary" @click="$store.dispatch('setRideInfo', true)">
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
-    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation" :time='this.time' :address='this.theEndAddress'
+    <DriverConfirmationDialogBox v-if="$store.state.DriverMenuConfirmation && $store.state.submenuPage === null" :time='this.time' :address='this.theEndAddress'
       :money='this.money' :passengerID='this.passengerID' :passengerEmailAddress='this.passengerEmailAddress' :driverRate='this.driverRate'></DriverConfirmationDialogBox>
-    <RideInfo v-show="$store.state.rideInfo" :passengerID='this.passengerID' :clientName='this.passengerName' :comment='this.comment'
+    <RideInfo v-show="$store.state.rideInfo && $store.state.submenuPage === null" :passengerID='this.passengerID' :clientName='this.passengerName' :comment='this.comment'
       :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money" :passengerEmailAddress='this.passengerEmailAddress'></RideInfo>
+      <History v-if="$store.state.submenuPage === 'history'"></History>
+      <DemandArea v-if="$store.state.submenuPage === 'demandArea'"></DemandArea>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -43,6 +45,8 @@
 </template>
 
 <script>
+  import History from './Reuse/History.vue'
+  import DemandArea from './Reuse/DemandArea.vue'
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
@@ -175,7 +179,9 @@
       Footer,
       SideNavigation,
       DriverConfirmationDialogBox,
-      RideInfo
+      RideInfo,
+      History,
+      DemandArea
     },
     methods: {
       async getDriverRate() {

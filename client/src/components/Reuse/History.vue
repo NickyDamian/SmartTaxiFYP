@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-layout>
-      <v-flex xs12 sm6 offset-sm3>
+      <v-flex>
         <v-card>
           <v-toolbar color="primary" dark>
             <v-btn icon dark @click.native="$store.dispatch('setSubmenuPage', null)">
@@ -11,6 +11,7 @@
             <v-spacer></v-spacer>
           </v-toolbar>
         </v-card>
+        <v-flex xs12 sm6 offset-sm3>
         <v-card v-if="responses != null" v-for="(response, index) in responses" :key='index'>
           <v-divider light class="pt-2"></v-divider>
           <v-flex class="pt-1 money">
@@ -32,6 +33,7 @@
             <v-textarea outline class="pl-3 pr-3" rows="2" solo label="No feedbacks to show..." readonly :value="response.feedback"></v-textarea>
           </v-flex>
         </v-card>
+        </v-flex>
         <v-dialog v-model="dialog" width="500" persistent>
           <v-card>
             <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>

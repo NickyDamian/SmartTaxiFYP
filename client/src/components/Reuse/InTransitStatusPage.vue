@@ -264,15 +264,12 @@
         clearInterval(this.theIntervalWhenDriverArrives)
       },
       sendRequest(data) {
-        console.log("Hi Everybody2", data.rideRequest[7])
         var x = data.rideRequest[7] //passenger email
         this.getHistory(x)
       },
       requestStatus(data) {
-        console.log("Hi Everybody", data.driverEmailAddress)
         if (data.message == 'Accepted') {
           var x = data.driverEmailAddress //driver email
-          console.log(x)
           this.getHistory(x)
         } else {
           console.log("Declined")
@@ -294,7 +291,6 @@
     ],
     methods: {
       async getHistory(emailAddress) {
-        console.log("Kappa Pride is Don")
         try {
           var historyRequest = await HistoryService.getHistory({
               email: emailAddress
@@ -308,7 +304,6 @@
             sum = (sum + parseInt(historyRequest.data.histories.rideInfo[i].rating))
           }
           var average = (sum / historyRequest.data.histories.rideInfo.length)
-          console.log(average, "Kappa")
           this.displayRating = average
         } else {
           console.log("GG")
@@ -373,7 +368,7 @@
             const response = await FeedbackService.saveBadRequest({
               passengerID: this.passengerEmailAddress,
               feedbacks: [{
-                driverName: this.$store.state.clientEmailAddress,
+                driverName: this.$store.state.clientName,
                 comment: this.feedback
               }]
             })
@@ -388,7 +383,6 @@
     driverNoticeInterval() {
       var self = this
       this.theIntervalWhenDriverArrives = setInterval(() => {
-        console.log(self.theIntervalWhenDriverArrives, "Kappa Pride Don")
         self.cancelPassengerRequest = true
       }, 20000)
     },

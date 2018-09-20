@@ -491,7 +491,7 @@ import History from './Reuse/History.vue'
             self.centerMap(data[i].location, data[i].socketID, i);
           }
         }, 1000);
-      },
+      }, 
       createGoogleMaps() {
         if (!this.$store.state.loadGoogleMapsAPI) {
         this.$store.dispatch('setLoadGoogleMapsAPI', true) //If API has already been used, send next request without utilising the API
