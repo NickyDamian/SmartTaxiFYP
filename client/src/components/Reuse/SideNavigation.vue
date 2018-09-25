@@ -1,11 +1,11 @@
 <template>
   <v-layout>
     <v-toolbar color="primary" dark fixed>
-      <v-toolbar-side-icon v-if='!$store.state.rideInfo' @click.stop="drawer = !drawer"></v-toolbar-side-icon>
+      <v-toolbar-side-icon v-if='!$store.state.hideTheTopIcons' @click.stop="drawer = !drawer"></v-toolbar-side-icon>
       <v-toolbar-title>Smart Taxi</v-toolbar-title>
       <v-spacer></v-spacer>
 
-      <v-btn icon v-if="$store.state.typeOfUser === 'Passenger' && !$store.state.rideInfo" @click="searchPlaces()">
+      <v-btn icon v-if="$store.state.typeOfUser === 'Passenger' && !$store.state.hideTheTopIcons" @click="searchPlaces()">
         <v-icon>directions</v-icon>
       </v-btn>
       <v-btn icon @click="callEmergencyContacts()">
@@ -17,7 +17,7 @@
       <v-list class="pa-1">
         <v-list-tile avatar>
           <v-list-tile-avatar>
-            <img src="https://scontent.fkul8-1.fna.fbcdn.net/v/t1.0-9/944741_549526581802281_2055920157_n.jpg?_nc_cat=0&oh=22b26b54bf0a1894b2720bf4ce713ee0&oe=5C07A9E8">
+            <img src="http://icons.iconarchive.com/icons/graphicloads/flat-finance/256/person-icon.png">
           </v-list-tile-avatar>
 
           <v-list-tile-content>
@@ -41,6 +41,26 @@
         </v-list-tile>
       </v-list>
     </v-navigation-drawer>
+    <v-dialog v-model="dialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Access Denied
+        </v-card-title>
+
+        <v-card-text>
+          This function is only offered to driver's of Smart Taxi. Sorry for the inconvinience.
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="dialog = false">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-layout>
 </template>
 
@@ -49,6 +69,7 @@ import Vue from 'vue'
   export default {
     data() {
       return {
+        dialog: false,
         drawer: false,
         searchBox: false,
         items: [{
@@ -102,7 +123,11 @@ import Vue from 'vue'
       },
       changePage(item) {
         if (item != 'login') {
-          this.$store.dispatch('setSubmenuPage', item)
+          if((item === 'demandArea' && this.$store.state.typeOfUser === 'Passenger') || (item === 'pickups' && this.$store.state.typeOfUser === 'Passenger')){
+            this.dialog = true
+          } else {
+            this.$store.dispatch('setSubmenuPage', item)
+          }
         }
       },
       callEmergencyContacts() {

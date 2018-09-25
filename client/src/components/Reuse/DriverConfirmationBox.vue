@@ -157,6 +157,7 @@
           driverName: this.$store.state.clientName,
           driverEmailAddress: this.$store.state.clientEmailAddress
         })
+        this.$store.dispatch('setHideTheTopIcons', true) //Hide the top menus when ride request is accepted
         this.$store.dispatch('setDriverRate', this.driverRate) //Stop interval function when driver accept request 
         this.$store.dispatch('setDriverIntervalStatus', true) //Stop interval function when driver accept request       
         this.deleteDriverFromServer() //Delete driver location from available driver collection

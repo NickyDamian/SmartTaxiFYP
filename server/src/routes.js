@@ -7,8 +7,15 @@ const DriverLocationController = require('./controllers/LocationController')
 const HistoryController = require('./controllers/HistoryController')
 const PriceController = require('./controllers/PriceController')
 const CancellationRateController = require('./controllers/CancellationController')
+const PickupsController = require('./controllers/PickupsController')
 
 module.exports = (app) => {
+    app.post('/savePickups', //middleway function to save driver's pickup history
+        PickupsController.savePickups)
+
+    app.post('/getPickups', //middleway function to get driver's pickup history
+        PickupsController.getPickups)
+
     app.post('/getCancelRate', //middleway function to get driver's acceptance rate
         CancellationRateController.get)
 
@@ -32,6 +39,9 @@ module.exports = (app) => {
 
     app.post('/updateDetails', //middleway function to update user details
         AuthenticationController.updateDetails)
+
+    app.post('/deleteDetails', //middleway function to delete user
+        AuthenticationController.deleteDetails)
 
     app.post('/location', //middleway function to save driver location
         DriverLocationController.saveLocation)

@@ -126,5 +126,20 @@ module.exports = {
                 error: 'An error has occurred trying to retrieve details. Please try again.'
             })
         } //send back the object to client that res for the endpoint
+    },
+    async deleteDetails(req,res) {
+        //remove user from the collection in mongodb
+        await User.remove({
+            email: req.body.email
+        }).then(
+            res.send({
+                message: "User has been removed from database"
+            })
+        ).catch(next => {
+            if(next.name == 'MongoError'){
+                res.status(400).send({error: 'Error deleting Driver Location'})
+            }
+            console.log(next)
+        })
     }
 }

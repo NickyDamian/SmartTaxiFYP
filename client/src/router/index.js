@@ -5,6 +5,7 @@ import Register from '@/components/Register'
 import Menu from '@/components/Menu'
 import Test from '@/components/Testing'
 import Admin from '@/components/Admin'
+import t from '@/components/t'
 
 Vue.use(Router)
 
@@ -34,6 +35,11 @@ export default new Router({
       path: '/admin',
       name: 'admin',
       component: Admin
+    },
+    {
+      path: '/t',
+      name: 't',
+      component: t
     }
   ]
 })

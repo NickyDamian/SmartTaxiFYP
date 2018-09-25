@@ -46,6 +46,7 @@
       </v-card>
       <v-dialog v-model="commentDialog" width="500" persistent ref="commentDialog">
         <v-card>
+          <v-form ref="form1">
           <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
             Smart Taxi
           </v-card-title>
@@ -62,10 +63,11 @@
               Cancel
             </v-btn>
 
-            <v-btn color="green darken-1" flat="flat" @click="commentDialog = false, passengerComment()">
+            <v-btn color="green darken-1" flat="flat" @click="submit1()">
               Confirm
             </v-btn>
           </v-card-actions>
+          </v-form>
         </v-card>
       </v-dialog>
       <v-dialog v-model="noNearDriversAvailable" width="500" persistent>
@@ -131,6 +133,12 @@
       this.$store.dispatch('setCommentForPassenger', null)
     },
     methods: {
+      submit1() {
+        if (this.$refs.form1.validate()) {
+          this.passengerComment()
+          this.commentDialog = false
+        }
+      },
       passengerComment() {
         this.$store.dispatch('setCommentForPassenger', this.comment)
       },
@@ -175,7 +183,7 @@
           }
         }
         console.log(minimum, shortestDistanceDriver)
-        if (minimum < 150 || minimum === undefined) {
+        if (minimum < 4.5 || minimum === undefined) {
           //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
           this.$socket.emit('sendRequest', {
             rideRequest: [this.time, this.money, this.startAddress, this.endAddress, this.$store.state.clientName, this.distance, this.money, this.$store.state.clientEmailAddress],
@@ -270,7 +278,7 @@
 
   .comment-section {
     padding-top: 18px;
-    margin-bottom: -10px
+    margin-bottom: -10px;
   }
 
 </style>

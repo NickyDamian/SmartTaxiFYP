@@ -4,11 +4,14 @@ export default {
     saveDriverFeedback (rating) {
         return Api().post('saveDriverFeedback', rating);
     },
-    getDriverFeedbacks (id) {
-        return Api().post('getDriverFeedbacks', id);
+    getDriverFeedback (passengerId) {
+        return Api().post('getDriverFeedbacks', passengerId);
     },
     savePassengerFeedback (rating) {
         return Api().post('savePassengerFeedback', rating);
+    },
+    getPassengerFeedback (driverId) {
+        return Api().post('getPassengerFeedbacks', driverId);
     },
     saveBadRequest (rating) {
         return Api().post('savePassengerCancelFeedback', rating);

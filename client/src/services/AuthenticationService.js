@@ -12,5 +12,8 @@ export default {
     },
     updateDetails (email) {
         return Api().post('updateDetails', email);
+    },
+    deleteDetails (email) {
+        return Api().post('deleteDetails', email);
     }
 }

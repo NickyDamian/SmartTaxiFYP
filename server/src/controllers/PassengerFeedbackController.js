@@ -48,7 +48,7 @@ module.exports = {
             })
             if(feedback) {
                 res.send({
-                    feedbacks: feedback,
+                    retrieved: feedback,
                     message: 'Successfully retrieved driver feedbacks',
                     condition: true
                 })

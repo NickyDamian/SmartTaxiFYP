@@ -41,7 +41,7 @@
             <label> Don't have an account? </label><br>
           </div>
           <div id="register-btn">
-            <a @click="navigateTo({name: 'register'})">Let's Create One</a>
+            <a @click="navigateTo({name: 't'})">Let's Create One</a>
           </div>
         </div>
       </v-flex>

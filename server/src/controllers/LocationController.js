@@ -50,7 +50,6 @@ module.exports = {
     },
     async deleteLocation(req,res) {
         const {socketID} = req.body
-        console.log(socketID,"Kappppppaaaa    Priddeee")
         //remove driver from the available driver collection in mongodb
         await DriverLocation.remove({
             socketID: socketID

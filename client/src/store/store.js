@@ -6,6 +6,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     strict: true, //state can only be changed through action
     state: {
+        hideTheTopIcons: false, //Hide the top menus when ride request is accepted
         driverRate: null, //Current cancellation rate of the driver
         submenuPage: null,
         loadGoogleMapsAPI: false, //Call the script only once
@@ -33,6 +34,9 @@ export default new Vuex.Store({
     }, //keeping track of changes
 
     mutations: {
+        setHideTheTopIcons (state, hideTheTopIcons){
+            state.hideTheTopIcons = hideTheTopIcons
+        },
         setDriverRate (state, driverRate){
             state.driverRate = driverRate
         },
@@ -113,6 +117,9 @@ export default new Vuex.Store({
         }
     },
     actions: {
+        setHideTheTopIcons ({commit}, hideTheTopIcons) {
+            commit('setHideTheTopIcons', hideTheTopIcons) //do async calls/logic
+        },
         setDriverRate ({commit}, driverRate) {
             commit('setDriverRate', driverRate) //do async calls/logic
         },

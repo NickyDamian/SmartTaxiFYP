@@ -32,6 +32,7 @@
       :rideActuallyCompleted='this.rideActuallyCompleted' :startAddress='this.theStartAddress' :endAddress='this.theEndAddress'
       :money='this.money' :driverEmailAddress='this.driverEmailAddress'></RideInfo>
       <History v-if="$store.state.submenuPage === 'history'"></History>
+      <Profile v-if="$store.state.submenuPage === 'profile'"></Profile>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -100,11 +101,12 @@
 </template>
 
 <script>
-import History from './Reuse/History.vue'
+  import History from './Reuse/History.vue'
   import Footer from './Reuse/Footer.vue'
   import SideNavigation from './Reuse/SideNavigation.vue'
   import ConfirmationDialogBox from './Reuse/Confirmation-Box.vue'
   import RideInfo from './Reuse/InTransitStatusPage.vue'
+  import Profile from './Reuse/Profile.vue'
   import LocationService from '@/services/LocationService'
   import PriceService from '@/services/PriceService'
 
@@ -279,6 +281,7 @@ import History from './Reuse/History.vue'
         console.log("Kelf and Don kappa pride")
         //Delete the driver from the marker array since driver is no longer available
         if (data.message == 'Accepted') {
+          this.$store.dispatch('setHideTheTopIcons', true) //Hide the top menus when ride request is accepted
           this.driverID = data.driverId
           this.driverName = data.driverName
           this.driverEmailAddress = data.driverEmailAddress
@@ -318,6 +321,7 @@ import History from './Reuse/History.vue'
         this.$store.dispatch('setDisplayJourneyCompletedForPassenger', true) //Passenger cannot cancel booking once in the driver's car
       },
       canceledRequest(data) {
+        this.$store.dispatch('setHideTheTopIcons', false)
         this.driverArrivedMessage = data.response
         this.notifyPassengerDialog = data.message
         this.selectedDriverMarker = null
@@ -372,7 +376,8 @@ import History from './Reuse/History.vue'
       SideNavigation,
       ConfirmationDialogBox,
       RideInfo,
-      History
+      History,
+      Profile
     },
 
     methods: {
@@ -477,7 +482,6 @@ import History from './Reuse/History.vue'
         self.getLocations()
         //Get list of available driver locations every 10 seconds
         this.driverLocationInterval = setInterval(function () {
-          console.log("Start")
           self.getLocations()
         }, 10000)
       },

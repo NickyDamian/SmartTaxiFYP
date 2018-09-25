@@ -19,7 +19,7 @@ module.exports = {
                         error: 'Error saving drivers feedback on passenger'
                     })
                 }
-                console.log(next)
+                console.log(next) 
             }); //send back the object to client that res for the endpoint
         }
         //If passenger feedback exist, find the corrent driver and update its location
@@ -48,7 +48,7 @@ module.exports = {
             })
             if(feedback) {
                 res.send({
-                    feedbacks: feedback,
+                    retrieved: feedback,
                     message: 'Successfully retrieved driver feedbacks',
                     condition: true
                 })

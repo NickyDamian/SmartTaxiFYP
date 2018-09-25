@@ -7,7 +7,7 @@
             <v-btn icon dark @click.native="$store.dispatch('setSubmenuPage', null)">
               <v-icon>close</v-icon>
             </v-btn>
-            <v-toolbar-title>Demand Area</v-toolbar-title>
+            <v-toolbar-title>Pickups Stats</v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
         </v-card>
@@ -17,6 +17,7 @@
               <template slot="items" slot-scope="props">
                 <td class="text-xs-left">{{ props.item.name }}</td>
                 <td>{{ props.item.frequency }}</td>
+                <td>{{ props.item.totalPrice }}</td>
               </template>
               <template slot="no-data">
                 <v-alert :value="true" color="red" icon="warning">
@@ -32,13 +33,13 @@
 </template>
 
 <script>
-  import LocationService from '@/services/LocationService'
+  import PickupService from '@/services/PickupService'
   export default {
     data() {
       return {
         requestInterval: null,
         headers: [{
-            text: 'Demand Area',
+            text: 'Pickups',
             align: 'left',
             value: 'name'
           },
@@ -46,22 +47,30 @@
             text: 'Frequency',
             align: 'center',
             value: 'frequency'
+          },
+          {
+            text: 'Total (MYR)',
+            align: 'center',
+            value: 'totalPrice'
           }
         ],
         areas: [{
             value: false,
             name: 'Asia Pacific University',
-            frequency: 0
+            frequency: 0,
+            totalPrice: 0
           },
           {
             value: false,
             name: 'Maybank TPM',
-            frequency: 0
+            frequency: 0,
+            totalPrice: 0
           },
           {
             value: false,
             name: 'LRT Alam Sutera',
-            frequency: 0
+            frequency: 0,
+            totalPrice: 0
           }
         ],
         responses: null
@@ -87,40 +96,51 @@
             lng: 101.656457
         });
         //do a request to the backend for all the driver locations
-        var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data      
+        var data = (await PickupService.getPickups({
+          email: this.$store.state.clientEmailAddress
+        })).data //always put .data cause thats how axios returns your data 
         //Function is delayed to allow google libraries to be loaded first
         var apuArea = []
         var maybankArea = []
         var alamsuteraArea = []
-        for (var i = 0; data[i] != undefined; i++) {
-          var driverPosition =  new google.maps.LatLng({
-            lat: data[i].location.lat,
-            lng: data[i].location.lng
-        });
+        var apuAreaPrice = 0 
+        var maybankAreaPrice = 0 
+        var alamSuteraAreaPrice = 0
+        for (var i = 0; data.details.pickup[i] != undefined; i++) {
+          var driverPosition = new google.maps.LatLng({
+            lat: data.details.pickup[i].location.lat,
+            lng: data.details.pickup[i].location.lng
+          })
           var apuRadius = (google.maps.geometry.spherical.computeDistanceBetween(apu, driverPosition) / 1000).toFixed(2)
           if(apuRadius <= 1.00) {
             apuArea.push(apuRadius)
+            apuAreaPrice = (apuAreaPrice + data.details.pickup[i].price)
           }
 
           var maybankRadius = (google.maps.geometry.spherical.computeDistanceBetween(maybank, driverPosition) / 1000).toFixed(2)
           if(maybankRadius <= 1.00) {
             maybankArea.push(maybankRadius)
+            maybankAreaPrice = (maybankAreaPrice + data.details.pickup[i].price)
           }
 
           var alamsuteraRadius = (google.maps.geometry.spherical.computeDistanceBetween(alamsutera, driverPosition) / 1000).toFixed(2)
           if(alamsuteraRadius <= 1.00) {
             alamsuteraArea.push(alamsuteraRadius)
+            alamSuteraAreaPrice = (alamSuteraAreaPrice + data.details.pickup[i].price)
           }
           //Push the apu radius in an array if less than 1km. Check lenght of array for frequency
           }
           if(apuArea.length != undefined) {
             this.areas[0].frequency = apuArea.length
+            this.areas[0].totalPrice = apuAreaPrice.toFixed(2)
           }
           if(maybankArea.length != undefined) {
             this.areas[1].frequency = maybankArea.length
+            this.areas[1].totalPrice = maybankAreaPrice.toFixed(2)
           }
           if(alamsuteraArea.length != undefined) {
             this.areas[2].frequency = alamsuteraArea.length
+            this.areas[2].totalPrice = alamSuteraAreaPrice.toFixed(2)
           }
       }
     },

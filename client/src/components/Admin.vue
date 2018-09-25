@@ -45,8 +45,11 @@
           </v-layout>
         </v-container>
       </v-form>
-      <v-btn class="mb-2" color="primary" @click="submit1()">
+      <v-btn class="mb-2" color="secondary" @click="submit1()">
         <v-icon class="pr-2">search</v-icon> Update
+      </v-btn>
+      <v-btn class="mb-2" color="primary" @click="deleteDialog = true">
+        <v-icon class="pr-2">delete</v-icon> Delete
       </v-btn>
       <v-btn class="mb-2" flat color="primary" @click="detailsFound = false">
         <v-icon class="pr-2">arrow_back</v-icon> back
@@ -87,6 +90,49 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog persistent v-model="successDelete" width="500">
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Delete Successful
+        </v-card-title>
+
+        <v-card-text>
+          User details has been successfully deleted!
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="successDelete = false, detailsFound = false, priceDialog = false ">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog persistent v-model="deleteDialog" width="500">
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Confirmation
+        </v-card-title>
+
+        <v-card-text>
+          Are you sure you want to delete this user from the database?
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="deleteDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn color="primary" flat @click="deleteDialog = false, deleteUser()">
+            Sure
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -103,6 +149,8 @@ import PriceService from '@/services/PriceService'
   export default {
     data() {
       return {
+        successDelete: false,
+        deleteDialog: false,
           updateDialog: false,
           dialogtext: null,
           detailsFound: false,
@@ -150,13 +198,21 @@ import PriceService from '@/services/PriceService'
     computed: {
       binding() {
         const binding = {}
-
         if (this.$vuetify.breakpoint.mdAndDown) binding.column = true
-
         return binding
       }
     },
     methods: {
+      async deleteUser() {
+        try {
+          const response = await AuthenticationService.deleteDetails({
+            email: this.email
+          })
+        this.successDelete = true
+        } catch (error) {
+          this.error = error.response.data.error
+        }
+      },
       showPriceDialog() {
         if (this.priceDialog == false) {
           this.priceDialog = true

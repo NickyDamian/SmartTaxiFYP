@@ -14,6 +14,8 @@
       :startAddress='this.theStartAddress' :endAddress='this.theEndAddress' :distance='this.distance' :money="this.money" :passengerEmailAddress='this.passengerEmailAddress'></RideInfo>
       <History v-if="$store.state.submenuPage === 'history'"></History>
       <DemandArea v-if="$store.state.submenuPage === 'demandArea'"></DemandArea>
+      <Pickups v-if="$store.state.submenuPage === 'pickups'"></Pickups>
+      <Profile v-if="$store.state.submenuPage === 'profile'"></Profile>
     <v-snackbar v-model="snackbar" :bottom="y === 'bottom'" :left="x === 'left'" :multi-line="mode === 'multi-line'"
       :right="x === 'right'" :timeout="timeout" :top="y === 'top'" :vertical="mode === 'vertical'">
       {{ text }}
@@ -51,8 +53,10 @@
   import SideNavigation from './Reuse/SideNavigation.vue'
   import DriverConfirmationDialogBox from './Reuse/DriverConfirmationBox.vue'
   import RideInfo from './Reuse/InTransitStatusPage.vue'
+  import Profile from './Reuse/Profile.vue'
   import LocationService from '@/services/LocationService'
   import CancelRate from '@/services/CancelRateService'
+  import Pickups from './Reuse/Pickups.vue'
   var lat1 = 3.0580092
   var lng1 = 101.7011474
   var point = {
@@ -181,7 +185,9 @@
       DriverConfirmationDialogBox,
       RideInfo,
       History,
-      DemandArea
+      DemandArea,
+      Pickups,
+      Profile
     },
     methods: {
       async getDriverRate() {
@@ -193,7 +199,6 @@
           console.log(error)
         }
         this.driverRate = request.data
-        console.log(this.driverRate, "Kappa Pride OOOOOOOO")
       },
       prepareForLoggedOut() {
         if (this.$store.state.driverLoggedOut) {

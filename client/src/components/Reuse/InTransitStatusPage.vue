@@ -10,7 +10,7 @@
     <v-card dark color="primary">
       <v-flex class='pt-2'>
         <v-avatar :size="135" color="grey lighten-4">
-          <img src="https://scontent.fkul8-1.fna.fbcdn.net/v/t1.0-9/944741_549526581802281_2055920157_n.jpg?_nc_cat=0&oh=22b26b54bf0a1894b2720bf4ce713ee0&oe=5C07A9E8"
+          <img src="https://png.icons8.com/color/1600/person"
             alt="avatar">
         </v-avatar>
       </v-flex>
@@ -32,8 +32,8 @@
           <label>{{distance}} km</label>
         </v-flex>
         <v-flex class='pb-3'>
-          <v-rating readonly half-increments v-model="displayRating" color="yellow darken-3" background-color="grey darken-1" empty-icon="$vuetify.icons.ratingFull"
-            full-increments></v-rating>
+          <v-rating readonly half-increments v-model="displayRating" color="yellow darken-3" background-color="grey darken-1"
+            empty-icon="$vuetify.icons.ratingFull" full-increments></v-rating>
         </v-flex>
       </div>
     </v-card>
@@ -71,7 +71,7 @@
       <v-btn v-if='$store.state.typeOfUser == "Driver" && driverReached' flat large dark block @click="driverHasReached(), notifyPassengerDialog=true, driverReached = false, beginJourney = true">
         <v-icon class="pr-2">directions_car</v-icon> Driver Has Reached
       </v-btn>
-      <v-btn v-if='$store.state.typeOfUser == "Driver" && beginJourney' flat large dark block @click="beginJourney = false, completeJourney = true, $store.dispatch('setRideInfo', false), beginTheJourney()">
+      <v-btn v-if='$store.state.typeOfUser == "Driver" && beginJourney' flat large dark block @click="beginJourney = false, completeJourney = true, $store.dispatch('setRideInfo', false), beginTheJourney(), getCurrentLocation()">
         <v-icon class="pr-2">beenhere</v-icon> Begin Journey
       </v-btn>
       <v-btn v-if='completeJourney || $store.state.displayJourneyCompletedForPassenger' flat large dark block @click="completeJourney = false, driverReached = true, checkIfJourneyCompleted()">
@@ -94,7 +94,7 @@
             Lulz Joke
           </v-btn>
 
-          <v-btn color="green darken-1" flat="flat" @click="dialog = false, passengerCanceledRequest(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="green darken-1" flat="flat" @click="dialog = false, passengerCanceledRequest(), $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false)">
             I'm Sure
           </v-btn>
         </v-card-actions>
@@ -139,7 +139,8 @@
             Wait
           </v-btn>
 
-          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest(), driverReached= true, beginJourney= false, $store.dispatch('setRideInfo', false)">
+          <v-btn color="green darken-1" flat="flat" @click="cancelPassengerRequest = false, resendDriverHasReachedRequest(), driverReached= true, beginJourney= false, 
+          $store.dispatch('setHideTheTopIcons', false), $store.dispatch('setRideInfo', false)">
             Cancel Request
           </v-btn>
         </v-card-actions>
@@ -165,7 +166,8 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), saveHistory(), saveDriverRate(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), saveHistory(), saveDriverRate(), 
+          $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false)">
             Submit
           </v-btn>
         </v-card-actions>
@@ -191,10 +193,10 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, $store.dispatch('setRideInfo', false)">
+          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false)">
             Skip
           </v-btn>
-          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, submitFeedback(), $store.dispatch('setRideInfo', false)">
+          <v-btn color="primary" flat @click="passengerCanceledFeedbackDialog = false, submitFeedback(), $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false)">
             Submit
           </v-btn>
         </v-card-actions>
@@ -228,6 +230,7 @@
   import FeedbackService from '@/services/FeedbackService'
   import HistoryService from '@/services/HistoryService'
   import CancelRate from '@/services/CancelRateService'
+  import PickupService from '@/services/PickupService'
   export default {
     data() {
       return {
@@ -244,7 +247,8 @@
         beginJourney: false,
         completeJourney: false,
         feedbackDialog: false,
-        theIntervalWhenDriverArrives: null
+        theIntervalWhenDriverArrives: null,
+        historyRequest: null
       }
     },
     sockets: {
@@ -265,12 +269,12 @@
       },
       sendRequest(data) {
         var x = data.rideRequest[7] //passenger email
-        this.getHistory(x)
+        this.getHistory("Driver", x)
       },
       requestStatus(data) {
         if (data.message == 'Accepted') {
           var x = data.driverEmailAddress //driver email
-          this.getHistory(x)
+          this.getHistory("Passenger", x)
         } else {
           console.log("Declined")
         }
@@ -287,23 +291,58 @@
       'endAddress',
       'clientName',
       'distance',
-      'money' 
+      'money'
     ],
     methods: {
-      async getHistory(emailAddress) {
+      getCurrentLocation() {
+        var self = this
+        //Get user's current postition
+        navigator.geolocation.getCurrentPosition(function (position) {
+          var currentUserPos = new google.maps.LatLng({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          self.savePickup(currentUserPos);
+        });
+      },
+      async savePickup(position) {
         try {
-          var historyRequest = await HistoryService.getHistory({
-              email: emailAddress
+            var pickups = await PickupService.savePickups({
+              email: this.$store.state.clientEmailAddress,
+              pickup:[{
+                location: position,
+                price: this.money
+              }]
             })
-        } catch (error) {
-          console.log(error)
-        }
-        if (historyRequest != null) {
-          var sum = 0
-          for(var i=0; i < historyRequest.data.histories.rideInfo.length; i++) {
-            sum = (sum + parseInt(historyRequest.data.histories.rideInfo[i].rating))
+          } catch (error) {
+            console.log(error)
           }
-          var average = (sum / historyRequest.data.histories.rideInfo.length)
+      },
+      async getHistory(user, emailAddress) {
+        if (user === 'Driver') {
+          try {
+            this.historyRequest = await FeedbackService.getDriverFeedback({
+              passengerID: emailAddress
+            })
+          } catch (error) {
+            console.log(error)
+          }
+        } else {
+          try {
+            this.historyRequest = await FeedbackService.getPassengerFeedback({
+              driverID: emailAddress
+            })
+          } catch (error) {
+            console.log(error)
+          }
+        }
+        console.log(this.historyRequest)
+        if (this.historyRequest != null) {
+          var sum = 0
+          for (var i = 0; i < this.historyRequest.data.retrieved.feedbacks.length; i++) {
+            sum = (sum + parseInt(this.historyRequest.data.retrieved.feedbacks[i].rating))
+          }
+          var average = (sum / this.historyRequest.data.retrieved.feedbacks.length)
           this.displayRating = average
         } else {
           console.log("GG")
@@ -312,139 +351,139 @@
       async saveDriverRate() {
         if (this.$store.state.typeOfUser == 'Driver') {
           try {
-          var request = await CancelRate.saveRate({
+            var request = await CancelRate.saveRate({
               email: this.$store.state.clientEmailAddress,
               totalRides: (parseInt(this.$store.state.driverRate.totalRides) + 1),
               cancelled: parseInt(this.$store.state.driverRate.cancelled)
             })
-        } catch (error) {
-          console.log(error)
-        }
+          } catch (error) {
+            console.log(error)
+          }
         }
       },
-    async saveHistory() {
-      try {
-        var historyRequest = await HistoryService.saveHistory({
-          email: this.$store.state.clientEmailAddress,
-          rideInfo: [{
-            startAddress: this.startAddress,
-            endAddress: this.endAddress,
-            rating: this.rating,
-            feedback: this.feedback,
-            price: this.money
-          }]
-        })
-      } catch (error) {
-        this.error = error.response.data.error
-      }
-    },
-    async submitFeedback() {
-      if (this.$store.state.typeOfUser == 'Passenger') {
+      async saveHistory() {
         try {
-          const response = await FeedbackService.savePassengerFeedback({
-            driverID: this.driverEmailAddress,
-            feedbacks: [{
+          var historyRequest = await HistoryService.saveHistory({
+            email: this.$store.state.clientEmailAddress,
+            rideInfo: [{
+              startAddress: this.startAddress,
+              endAddress: this.endAddress,
               rating: this.rating,
-              comment: this.feedback
+              feedback: this.feedback,
+              price: this.money
             }]
           })
         } catch (error) {
           this.error = error.response.data.error
         }
-      } else {
-        try {
-          const response = await FeedbackService.saveDriverFeedback({
-            passengerID: this.passengerEmailAddress,
-            feedbacks: [{
-              rating: this.rating,
-              comment: this.feedback
-            }]
-          })
-        } catch (error) {
-          this.error = error.response.data.error
-        }
-        if (this.rating < 3) {
+      },
+      async submitFeedback() {
+        if (this.$store.state.typeOfUser == 'Passenger') {
           try {
-            const response = await FeedbackService.saveBadRequest({
-              passengerID: this.passengerEmailAddress,
+            const response = await FeedbackService.savePassengerFeedback({
+              driverID: this.driverEmailAddress,
               feedbacks: [{
-                driverName: this.$store.state.clientName,
+                rating: this.rating,
                 comment: this.feedback
               }]
             })
           } catch (error) {
             this.error = error.response.data.error
           }
+        } else {
+          try {
+            const response = await FeedbackService.saveDriverFeedback({
+              passengerID: this.passengerEmailAddress,
+              feedbacks: [{
+                rating: this.rating,
+                comment: this.feedback
+              }]
+            })
+          } catch (error) {
+            this.error = error.response.data.error
+          }
+          if (this.rating < 3) {
+            try {
+              const response = await FeedbackService.saveBadRequest({
+                passengerID: this.passengerEmailAddress,
+                feedbacks: [{
+                  driverName: this.$store.state.clientName,
+                  comment: this.feedback
+                }]
+              })
+            } catch (error) {
+              this.error = error.response.data.error
+            }
+          }
         }
-      }
-      this.rating = 5
-      this.feedback = ''
-    },
-    driverNoticeInterval() {
-      var self = this
-      this.theIntervalWhenDriverArrives = setInterval(() => {
-        self.cancelPassengerRequest = true
-      }, 20000)
-    },
-    driverHasReached() {
-      var self = this
-      this.$socket.emit('notifyDriverHasReached', {
-        message: true,
-        response: "Driver has arrived to your location. Driver will wait up to 3 mins for your arrival. Thank you!",
-        passengerId: this.passengerID
-      })
-      this.driverNoticeInterval()
-    },
-    resendDriverHasReachedRequest(message) {
-      if (message === 'Wait') {
+        this.rating = 0
+        this.feedback = ''
+      },
+      driverNoticeInterval() {
+        var self = this
+        this.theIntervalWhenDriverArrives = setInterval(() => {
+          self.cancelPassengerRequest = true
+        }, 20000)
+      },
+      driverHasReached() {
+        var self = this
         this.$socket.emit('notifyDriverHasReached', {
           message: true,
-          response: "This is a reminder notice. Please note that the driver has agreed to wait another 3 mins! Please hurry! Thank you!",
+          response: "Driver has arrived to your location. Driver will wait up to 3 mins for your arrival. Thank you!",
           passengerId: this.passengerID
         })
-      } else {
+        this.driverNoticeInterval()
+      },
+      resendDriverHasReachedRequest(message) {
+        if (message === 'Wait') {
+          this.$socket.emit('notifyDriverHasReached', {
+            message: true,
+            response: "This is a reminder notice. Please note that the driver has agreed to wait another 3 mins! Please hurry! Thank you!",
+            passengerId: this.passengerID
+          })
+        } else {
+          clearInterval(this.theIntervalWhenDriverArrives)
+          this.$store.dispatch('setCancelRequest', true)
+        }
+      },
+      beginTheJourney() {
         clearInterval(this.theIntervalWhenDriverArrives)
+        this.$store.dispatch('setDisplayRouteForJourney', true)
+        this.$socket.emit('theJourneyHasBegun', {
+          message: true,
+          passengerId: this.passengerID
+        })
+      },
+      cancelBooking() {
         this.$store.dispatch('setCancelRequest', true)
+        this.$store.dispatch('setCommentForPassenger', null)
+      },
+      passengerCanceledRequest() {
+        this.$store.dispatch('setJourneyCompleted', true)
+        this.$store.dispatch('setCommentForPassenger', null)
+        this.$socket.emit('preMatureCanceledRequest', {
+          message: true,
+          driverId: this.driverID
+        })
+      },
+      checkIfJourneyCompleted() {
+        if (this.$store.state.typeOfUser === 'Passenger' && !this.rideComplete) {
+          this.rideActuallyCompletedDialog = true
+        } else {
+          this.feedbackDialog = true
+        }
+      },
+      journeyCompleted() {
+        this.rideComplete = false
+        this.$socket.emit('rideActuallyCompleted', {
+          message: true,
+          passengerId: this.passengerID
+        })
+        this.$store.dispatch('setDisplayJourneyCompletedForPassenger', false)
+        this.$store.dispatch('setJourneyCompleted', true)
+        this.$store.dispatch('setCommentForPassenger', null)
       }
-    },
-    beginTheJourney() {
-      clearInterval(this.theIntervalWhenDriverArrives)
-      this.$store.dispatch('setDisplayRouteForJourney', true)
-      this.$socket.emit('theJourneyHasBegun', {
-        message: true,
-        passengerId: this.passengerID
-      })
-    },
-    cancelBooking() {
-      this.$store.dispatch('setCancelRequest', true)
-      this.$store.dispatch('setCommentForPassenger', null)
-    },
-    passengerCanceledRequest() {
-      this.$store.dispatch('setJourneyCompleted', true)
-      this.$store.dispatch('setCommentForPassenger', null)
-      this.$socket.emit('preMatureCanceledRequest', {
-        message: true,
-        driverId: this.driverID
-      })
-    },
-    checkIfJourneyCompleted() {
-      if (this.$store.state.typeOfUser === 'Passenger' && !this.rideComplete) {
-        this.rideActuallyCompletedDialog = true
-      } else {
-        this.feedbackDialog = true
-      }
-    },
-    journeyCompleted() {
-      this.rideComplete = false
-      this.$socket.emit('rideActuallyCompleted', {
-        message: true,
-        passengerId: this.passengerID
-      })
-      this.$store.dispatch('setDisplayJourneyCompletedForPassenger', false)
-      this.$store.dispatch('setJourneyCompleted', true)
-      this.$store.dispatch('setCommentForPassenger', null)
     }
-  }
   }
 
 </script>
