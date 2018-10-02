@@ -138,6 +138,7 @@
         this.end = data.endLocation
         this.comment = data.comment
         this.$store.dispatch('setDriverMenuConfirmation', true)
+        console.log(this.start, this.end, "Halo it me")
       },
       canceledRequest(data) {
         this.passengerMessage = data.response
@@ -333,6 +334,8 @@
       },
       getRoute() {
         // console.log(point, '1 ', point.lat(), '2 ', point.lng())
+        console.log("GGWP")
+        console.log(1,this.start.geometry.location.lat,"GGWP",this.start.geometry.location.lng)
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
         this.directionsDisplay = new google.maps.DirectionsRenderer()

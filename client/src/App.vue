@@ -9,23 +9,23 @@
   var deviceReady = false
   export default {
     name: 'App',
-    // mounted() {
-    //   document.addEventListener('deviceReady', () => {
-    //     console.log("Kelf Kappa Pride")
-    //     deviceReady = true
-    //   }, false)
-    //   console.log("AAAAAAAAAAAAAAAAAAA")
-    //   console.log(Vue.cordova)
-    //   Vue.cordova.on('deviceready', () => {
-    //       console.log("Ola Amigos")
-    //       alert("Don KappaPride")
-    //   });
-    //   if (deviceReady) {
-    //     console.log("Cordova Succ")
-    //   } else {
-    //     console.log("Cordova Rocks")
-    //   }
-    // }
+    mounted() {
+      document.addEventListener('deviceReady', () => {
+        console.log("Kelf Kappa Pride")
+        deviceReady = true
+      }, false)
+      console.log("AAAAAAAAAAAAAAAAAAA")
+      console.log(Vue.cordova)
+      Vue.cordova.on('deviceready', () => {
+          console.log("Ola Amigos")
+          alert("Don KappaPride")
+      });
+      if (deviceReady) {
+        console.log("Cordova Succ")
+      } else {
+        console.log("Cordova Rocks")
+      }
+    }
   }
 </script>
 

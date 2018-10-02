@@ -10,8 +10,7 @@
     <v-card dark color="primary">
       <v-flex class='pt-2'>
         <v-avatar :size="135" color="grey lighten-4">
-          <img src="https://png.icons8.com/color/1600/person"
-            alt="avatar">
+          <img src="https://png.icons8.com/color/1600/person" alt="avatar">
         </v-avatar>
       </v-flex>
       <div class='riderInfo'>
@@ -167,7 +166,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" flat @click="feedbackDialog = false, journeyCompleted(), submitFeedback(), saveHistory(), saveDriverRate(), 
-          $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false)">
+          $store.dispatch('setRideInfo', false), $store.dispatch('setHideTheTopIcons', false), sendEmailReceipt()">
             Submit
           </v-btn>
         </v-card-actions>
@@ -231,6 +230,7 @@
   import HistoryService from '@/services/HistoryService'
   import CancelRate from '@/services/CancelRateService'
   import PickupService from '@/services/PickupService'
+  import EmailService from '@/services/EmailService'
   export default {
     data() {
       return {
@@ -294,6 +294,20 @@
       'money'
     ],
     methods: {
+      async sendEmailReceipt(position) {
+        try {
+          var receipt = await EmailService.sendEmail({
+            clientEmail: this.$store.state.clientEmailAddress,
+            // clientEmail: 'nickydamian25@gmail.com',
+            clientName: this.$store.state.clientName,
+            startAddress: this.startAddress,
+            endAddress: this.endAddress,
+            price: this.money,
+          })
+        } catch (error) {
+          console.log(error)
+        }
+      },
       getCurrentLocation() {
         var self = this
         //Get user's current postition
@@ -307,16 +321,16 @@
       },
       async savePickup(position) {
         try {
-            var pickups = await PickupService.savePickups({
-              email: this.$store.state.clientEmailAddress,
-              pickup:[{
-                location: position,
-                price: this.money
-              }]
-            })
-          } catch (error) {
-            console.log(error)
-          }
+          var pickups = await PickupService.savePickups({
+            email: this.$store.state.clientEmailAddress,
+            pickup: [{
+              location: position,
+              price: this.money
+            }]
+          })
+        } catch (error) {
+          console.log(error)
+        }
       },
       async getHistory(user, emailAddress) {
         if (user === 'Driver') {

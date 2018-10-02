@@ -8,8 +8,12 @@ const HistoryController = require('./controllers/HistoryController')
 const PriceController = require('./controllers/PriceController')
 const CancellationRateController = require('./controllers/CancellationController')
 const PickupsController = require('./controllers/PickupsController')
+const EmailController = require('./controllers/EmailController')
 
 module.exports = (app) => {
+    app.post('/sendEmail', //middleway function to send email to client
+        EmailController.sendMail)
+
     app.post('/savePickups', //middleway function to save driver's pickup history
         PickupsController.savePickups)
 

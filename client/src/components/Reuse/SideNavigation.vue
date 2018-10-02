@@ -8,7 +8,7 @@
       <v-btn icon v-if="$store.state.typeOfUser === 'Passenger' && !$store.state.hideTheTopIcons" @click="searchPlaces()">
         <v-icon>directions</v-icon>
       </v-btn>
-      <v-btn icon @click="callEmergencyContacts()">
+        <v-btn icon href="tel:+999" @click="callEmergencyContacts()">
         <v-icon>call</v-icon>
       </v-btn>
     </v-toolbar>
@@ -131,7 +131,6 @@ import Vue from 'vue'
         }
       },
       callEmergencyContacts() {
-        // Vue.cordova.CordovaCall.sendCall('Kelf');
       }
     }
   }

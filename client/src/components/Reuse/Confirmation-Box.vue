@@ -98,6 +98,8 @@
   export default {
     data() {
       return {
+        keywordStart: null,
+        keywordEnd: null,
         x: 1, //Value to disable click button once book button has been clicked
         noNearDriversAvailable: false,
         comment: '',
@@ -131,6 +133,7 @@
     ],
     mounted() {
       this.$store.dispatch('setCommentForPassenger', null)
+      console.log(this.start.geometry.location.lat(),"GGWP",this.end.geometry.location.lat())
     },
     methods: {
       submit1() {
@@ -185,7 +188,8 @@
         console.log(minimum, shortestDistanceDriver)
         if (minimum < 4.5 || minimum === undefined) {
           //Emit Events //First parameter is the name of the message  //Second parameter is the actual value
-          this.$socket.emit('sendRequest', {
+          if(this.startLocation.id != undefined){
+            this.$socket.emit('sendRequest', {
             rideRequest: [this.time, this.money, this.startAddress, this.endAddress, this.$store.state.clientName, this.distance, this.money, this.$store.state.clientEmailAddress],
             driverId: shortestDistanceDriver[1],
             passengerId: this.$socket.id,
@@ -193,6 +197,20 @@
             endLocation: this.endLocation,
             comment: this.comment
           })
+          } else {
+            var x = {geometry:{location:{lat: this.start.geometry.location.lat(), lng: this.start.geometry.location.lng()}}}
+            var y = {geometry:{location:{lat: this.end.geometry.location.lat(), lng: this.end.geometry.location.lng()}}}              
+            this.$socket.emit('sendRequest', {
+            rideRequest: [this.time, this.money, this.startAddress, this.endAddress, this.$store.state.clientName, this.distance, this.money, this.$store.state.clientEmailAddress],
+            driverId: shortestDistanceDriver[1],
+            passengerId: this.$socket.id,
+            startLocation: x,
+            endLocation: y,
+            comment: this.comment,
+            search: true
+          })
+          }       
+          console.log(this.startLocation, 'GGWP', this.endLocation)
         } else {
           this.noNearDriversAvailable = true
           this.$store.dispatch('setStartThePassengerInterval', true)

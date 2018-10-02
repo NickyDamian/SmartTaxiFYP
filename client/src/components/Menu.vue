@@ -498,7 +498,8 @@
       }, 
       createGoogleMaps() {
         if (!this.$store.state.loadGoogleMapsAPI) {
-        this.$store.dispatch('setLoadGoogleMapsAPI', true) //If API has already been used, send next request without utilising the API
+        this.$store.dispatch('setLoadGoogleMapsAPI', true) 
+        //If API has already been used, send next request without utilising the API
           this.leGmap = new Promise((resolve, reject) => {
             let gmap = document.createElement('script')
             gmap.src =
@@ -508,7 +509,8 @@
             gmap.onerror = reject
             document.body.appendChild(gmap)
           })
-          this.$store.dispatch('setGmap', this.leGmap) //If API has already been used, send next request without utilising the API
+          this.$store.dispatch('setGmap', this.leGmap) 
+          //If API has already been used, send next request without utilising the API
           return this.leGmap
         } else {
           return this.$store.state.Gmap
@@ -579,7 +581,6 @@
       getRoute() {
         //Clear the pre-existed marker with old map reference
         this.setPoints = []
-
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
         this.directionsDisplay = new google.maps.DirectionsRenderer()
@@ -629,6 +630,10 @@
           travelMode: 'DRIVING'
         }, function (response, status) {
           if (status === 'OK') {
+            vm.start = {geometry:{location:{lat(){return start.lat}, lng(){return start.lng}}}}
+            vm.end = {geometry:{location:{lat(){return end[0].lat}, lng(){return end[0].lng}}}}
+            getStartPlace = {geometry:{location:{lat(){return start.lat}, lng(){return start.lng}}}}
+            getEndPlace = {geometry:{location:{lat(){return end[0].lat}, lng(){return end[0].lng}}}}
             vm.searchLocationStatus = true
             vm.directionsDisplay.setDirections(response)
             vm.time = response.routes[0].legs[0].duration.text
