@@ -26,7 +26,7 @@
       <v-icon class="pr-2">directions_car</v-icon> View Ride Info
     </v-btn>
     <ConfirmationDialogBox v-if="$store.state.MenuConfirmation && $store.state.submenuPage === null" :time='this.time' :startAddress='this.theStartAddress'
-      :endAddress='this.theEndAddress' :money='this.money' :data='this.setPoints' :start='this.start' :end='this.end'
+      :endAddress='this.theEndAddress' :money='this.actualPrice' :data='this.setPoints' :start='this.start' :end='this.end'
       :distance='this.distance'></ConfirmationDialogBox>
     <RideInfo v-show="$store.state.rideInfo && $store.state.submenuPage === null" :driverID='this.driverID' :clientName='this.driverName'
       :rideActuallyCompleted='this.rideActuallyCompleted' :startAddress='this.theStartAddress' :endAddress='this.theEndAddress'
@@ -55,6 +55,26 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" flat @click="notifyPassengerDialog = false, $store.dispatch('setRideInfo', false)">
+            Okay
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="surgePricingDialog" width="500" persistent>
+      <v-card>
+        <v-card-title style="color: white; font-size: 18px" class="primary" primary-title>
+          Surge Pricing
+        </v-card-title>
+
+        <v-card-text>
+          The price for ride services has doubled due to low supply of drivers available. Sorry for the inconvenience caused.
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" flat @click="surgePricingDialog = false">
             Okay
           </v-btn>
         </v-card-actions>
@@ -109,6 +129,7 @@
   import Profile from './Reuse/Profile.vue'
   import LocationService from '@/services/LocationService'
   import PriceService from '@/services/PriceService'
+  import OnlinePassengerService from '@/services/OnlinePassengerService'
 
   var getStartPlace
   var getEndPlace
@@ -118,6 +139,7 @@
   export default {
     data() {
       return {
+        surgePricingDialog: false,
         place1: getStartPlace,
         place2: getEndPlace,
         driverEmailAddress: null,
@@ -247,7 +269,13 @@
         id: null,
         setPoints: [],
         driverLocationInterval: null,
-        leGmap: null
+        leGmap: null,
+
+        surgePrice: false,
+        surgeFare: null,
+        actualPrice: null,
+        numberOfDrivers: null,
+        recheckSurgePricing: false
       }
 
     },
@@ -335,6 +363,8 @@
     },
 
     mounted() {
+      this.getOnlineDrivers()
+
       this.$store.dispatch('setTypeOfUser', 'Passenger') //Set User as Passenger
       var self = this
       console.log('Client socket has been connected Kappa', this.$socket.id)
@@ -367,8 +397,15 @@
         self.passengerHasLoggedOut()
       }, 1000)
 
+      setInterval(() => {
+        self.getOnlineDrivers()
+      }, 1000)
+
       //Get current fare rate
       this.getCurrentFareRate()
+
+      //Get amount of passengers online to determine surge pricing
+      this.saveOnlinePassenger()
     },
 
     components: {
@@ -381,6 +418,24 @@
     },
 
     methods: {
+      async deleteOnlinePassenger() {
+        try {
+          var request = await OnlinePassengerService.deleteOnlinePassenger({
+            socketID: this.$socket.id
+          })
+        } catch (error) {
+          console.log(error)
+        }
+      },
+      async saveOnlinePassenger() {
+        try {
+          var request = await OnlinePassengerService.saveOnlinePassenger({
+            socketID: this.$socket.id
+          })
+        } catch (error) {
+          console.log(error)
+        }
+      },
       async getCurrentFareRate() {
         try {
           var request = await PriceService.index()
@@ -410,6 +465,7 @@
       passengerHasLoggedOut() {
         if (this.$store.state.passengerLoggedOut) {
           this.setPoints = null
+          this.deleteOnlinePassenger()
           console.log(this.driverLocationInterval, "Kelf")
           clearInterval(this.driverLocationInterval)
           console.log(this.driverLocationInterval, "Don")
@@ -573,13 +629,45 @@
       findDriver() {
         if ((getStartPlace != null && getEndPlace != null) || this.searchLocationStatus) {
           this.$store.dispatch('setMenuConfirmation', true)
+          if(this.surgePrice){
+            this.actualPrice = this.surgeFare
+            this.surgePricingDialog = true
+          } else {
+            this.actualPrice = this.money
+          }
         } else {
           this.snackbar = true
           this.text = 'Please specify both addresses!'
         }
       },
+      async getOnlinePassenger() {
+        try {
+          var pas = 0
+          var request = await OnlinePassengerService.getOnlinePassenger()
+          pas = parseInt(request.data.length)
+          if(pas >= (this.numberOfDrivers *2)) {
+            this.surgePrice = true
+            if(this.recheckSurgePricing){
+              this.surgeFare = this.money * 2
+              this.recheckSurgePricing = false
+            }
+          } else {
+            this.surgePrice = false
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      },
+      async getOnlineDrivers() {
+        //do a request to the backend for all the driver locations
+        var data = (await LocationService.getLocation()).data //always put .data cause thats how axios returns your data      
+        //Function is delayed to allow google libraries to be loaded first
+        this.numberOfDrivers = data.length
+        this.getOnlinePassenger()
+      },
       getRoute() {
         //Clear the pre-existed marker with old map reference
+        this.recheckSurgePricing = true
         this.setPoints = []
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
@@ -602,8 +690,8 @@
             vm.time = response.routes[0].legs[0].duration.text
             vm.theStartAddress = response.routes[0].legs[0].start_address
             vm.theEndAddress = response.routes[0].legs[0].end_address
-            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * vm.currentFareRate).toFixed(2)
             vm.distance = (response.routes[0].legs[0].distance.value / 1000).toFixed(2)
+            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * vm.currentFareRate).toFixed(2)
           } else {
             console.log('Directions request failed due to ' + status)
           }
@@ -612,7 +700,7 @@
       getRoute2(start, end) {
         //Clear the pre-existed marker with old map reference
         this.setPoints = []
-
+        this.recheckSurgePricing = true
         this.vueGMap = new google.maps.Map(document.getElementById('map'), this.globalOptions());
         this.directionsService = new google.maps.DirectionsService()
         this.directionsDisplay = new google.maps.DirectionsRenderer()
@@ -639,8 +727,8 @@
             vm.time = response.routes[0].legs[0].duration.text
             vm.theStartAddress = response.routes[0].legs[0].start_address
             vm.theEndAddress = response.routes[0].legs[0].end_address
-            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * 1).toFixed(2)
             vm.distance = (response.routes[0].legs[0].distance.value / 1000).toFixed(2)
+            vm.money = ((response.routes[0].legs[0].distance.value / 1000) * vm.currentFareRate).toFixed(2)
           } else {
             console.log('Directions request failed due to ' + status)
           }

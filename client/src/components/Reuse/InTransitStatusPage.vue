@@ -182,7 +182,7 @@
           Will you like to notify other drivers of your experience?
         </v-card-text>
 
-        <v-rating v-model="rating" color="yellow darken-3" background-color="grey darken-1" empty-icon="$vuetify.icons.ratingFull"
+        <v-rating v-model="rating" :rating='1' readonly color="yellow darken-3" background-color="grey darken-1" empty-icon="$vuetify.icons.ratingFull"
           half-increments></v-rating>
 
         <v-card-actions>
@@ -297,7 +297,7 @@
       async sendEmailReceipt(position) {
         try {
           var receipt = await EmailService.sendEmail({
-            clientEmail: this.$store.state.clientEmailAddress,
+            clientEmail: 'nickydamian25@gmail.com',
             // clientEmail: 'nickydamian25@gmail.com',
             clientName: this.$store.state.clientName,
             startAddress: this.startAddress,

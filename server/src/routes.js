@@ -9,8 +9,18 @@ const PriceController = require('./controllers/PriceController')
 const CancellationRateController = require('./controllers/CancellationController')
 const PickupsController = require('./controllers/PickupsController')
 const EmailController = require('./controllers/EmailController')
+const OnlinePassengerController = require('./controllers/OnlinePassengerController')
 
 module.exports = (app) => {
+    app.post('/saveOnlinePassenger', //middleway function to send email to client
+        OnlinePassengerController.saveOnlinePassenger)
+        
+    app.post('/deleteOnlinePassenger', //middleway function to send email to client
+        OnlinePassengerController.deleteOnlinePassenger)
+
+    app.get('/getOnlinePassenger', //middleway function to send email to client
+        OnlinePassengerController.getOnlinePassenger)
+
     app.post('/sendEmail', //middleway function to send email to client
         EmailController.sendMail)
 

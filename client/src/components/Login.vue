@@ -2,9 +2,9 @@
   <v-container grid-list-md text-xs-center>
     <v-layout row wrap class="pt-5">
       <v-flex xs12 md12 lg12 class="pb-2">
-        <img class="logo" src="..\assets\img\GrabLogo.png" style="width:204px; height:79px; padding-bottom:10px;">
+        <img class="logo" src="..\assets\img\logo.png" style="width:120px; height:120px;">
       </v-flex>
-      <v-flex xs12 md12 lg12 class="pt-5">
+      <v-flex xs12 md12 lg12 class="pt-3">
         <h1 class="font-weight-black.font-italic"> WELCOME </h1>
       </v-flex>
       <v-flex xs12 md12 lg12 class="pt-3">
@@ -27,7 +27,7 @@
       </v-flex>
       <v-flex xs12 offset-xs6 md8 offset-md3 lg12 offset-lg3>
         <div class="forget-password">
-          <a href="#">Forgot Password?</a>
+          <a href="#"></a>
         </div>
       </v-flex>
       <v-flex xs12 md12 lg12 class="pt-3">
@@ -41,7 +41,7 @@
             <label> Don't have an account? </label><br>
           </div>
           <div id="register-btn">
-            <a @click="navigateTo({name: 't'})">Let's Create One</a>
+            <a @click="navigateTo({name: 'register'})">Let's Create One</a>
           </div>
         </div>
       </v-flex>
@@ -83,8 +83,11 @@
           })
           this.$store.dispatch('setName', request.data.user.firstname +" "+ request.data.user.lastname)
           this.$store.dispatch('setEmail', request.data.user.email)
+          console.log(request.data.user.typeUser)
           if(request.data.user.typeUser === 'Passenger') {
               this.$router.push({name: 'menu'})
+          } else if (request.data.user.typeUser === 'admin') {
+              this.$router.push({name: 'admin'})
           } else {
               this.$router.push({name: 'test'})
           }
